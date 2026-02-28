@@ -1,6 +1,18 @@
-/.idea/.gitignore
-/.idea/compiler.xml
-/.idea/gradle.xml
-/.idea/misc.xml
-/.idea/modules.xml
-/.idea/vcs.xml
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IntelliJ
+.idea/
+*.iml
+out/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# Env
+.env
