@@ -14,5 +14,10 @@ public class ViewController {
     public String getSignUpPage() {
         return "signup.html";
     }
+
+    @GetMapping("/testrefresh")
+    public String getTestRefreshPage() {
+        return "test_refresh.html";
+    }
 }
 

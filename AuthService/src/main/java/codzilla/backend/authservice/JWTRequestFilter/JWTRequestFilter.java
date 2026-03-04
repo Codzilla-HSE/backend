@@ -19,6 +19,11 @@ import codzilla.backend.authservice.JWTUtils.JWTUtils;
 @Slf4j
 @Component
 public class JWTRequestFilter extends OncePerRequestFilter {
+    JWTUtils jwtUtils;
+
+    public JWTRequestFilter(JWTUtils jwtUtils) {
+        this.jwtUtils = jwtUtils;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -26,6 +31,7 @@ public class JWTRequestFilter extends OncePerRequestFilter {
         String token = null;
         if (request.getCookies() != null) {
             for (var cookie : request.getCookies()) {
+                log.info("Cookie: " + cookie.getName());
                 if ("jwt".equals(cookie.getName())) {
                     token = cookie.getValue();
                     break;
@@ -36,8 +42,8 @@ public class JWTRequestFilter extends OncePerRequestFilter {
 
             log.info("Got token.");
             try {
-                String username = JWTUtils.getUsernameFromToken(token);
-                List<String> roles = JWTUtils.getRolesFromToken(token);
+                String username = jwtUtils.getUsernameFromToken(token);
+                List<String> roles = jwtUtils.getRolesFromToken(token);
                 log.info("{} has jwt. His roles: {}", username, roles);
 
                 List<SimpleGrantedAuthority> authorities = roles.stream()
