@@ -1,6 +1,9 @@
 package codzilla.backend.authservice.config;
 
+import codzilla.backend.authservice.AdminAccessDeniedHandler;
+import codzilla.backend.authservice.HttpStatusEntryPoint;
 import codzilla.backend.authservice.JWTRequestFilter.JWTRequestFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -22,38 +26,31 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    private static final String[] WHITELIST = {"/auth/**", "/login", "/login.html", "/signup", "/signup.html", "/auth/refresh"};
+
+
+    private final HttpStatusEntryPoint unauthorizedHandler;
+    private final AdminAccessDeniedHandler adminAccessDeniedHandler;
+    public SecurityConfig(HttpStatusEntryPoint unauthorizedHandler, AdminAccessDeniedHandler adminAccessDeniedHandler) {
+        this.unauthorizedHandler = unauthorizedHandler;
+        this.adminAccessDeniedHandler = adminAccessDeniedHandler;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JWTRequestFilter filter) throws Exception {
-        return http
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/login", "/login.html", "/auth/logout", "/auth/signup",
-                                "/signup", "/signup.html", "/auth/refresh").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+        return http.csrf(csrf -> csrf.disable())
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(unauthorizedHandler)
+                        .accessDeniedHandler(adminAccessDeniedHandler)
                 )
-                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
-                .build();
-
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth.requestMatchers(WHITELIST).permitAll().anyRequest().authenticated())
+                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class).build();
     }
 
     @Bean
     public AuthenticationManager authManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
-        configuration.setAllowCredentials(true);
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
     }
 
 
