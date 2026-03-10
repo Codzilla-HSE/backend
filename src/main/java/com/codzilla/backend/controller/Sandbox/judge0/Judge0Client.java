@@ -32,6 +32,7 @@ public class Judge0Client {
                 .retrieve()
                 .body(SubmissionResponse.class);
 
+        assert response != null;
         log.info("Judge0 response: status={}, stdout={}, stderr={}",
                 response.getStatus(), response.getStdout(), response.getStderr());
 
