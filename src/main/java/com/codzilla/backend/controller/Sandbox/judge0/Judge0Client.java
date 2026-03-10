@@ -19,7 +19,7 @@ public class Judge0Client {
                 .build();
     }
 
-    public String submit(String sourceCode, int languageId, String stdin) {
+    public String submit(String sourceCode, Integer languageId, String stdin) {
         var request = new SubmissionRequest(sourceCode, languageId, stdin);
 
         log.info("Sending to Judge0: source_code={}, language_id={}, stdin={}",
@@ -42,10 +42,10 @@ public class Judge0Client {
     // БЕЗ @Data и БЕЗ private — публичные поля, Jackson читает напрямую
     public static class SubmissionRequest {
         public String source_code;
-        public int language_id;
+        public Integer language_id;
         public String stdin;
 
-        public SubmissionRequest(String sourceCode, int languageId, String stdin) {
+        public SubmissionRequest(String sourceCode, Integer languageId, String stdin) {
             this.source_code = sourceCode;
             this.language_id = languageId;
             this.stdin = stdin;
@@ -63,7 +63,7 @@ public class Judge0Client {
         @Data
         @JsonIgnoreProperties(ignoreUnknown = true)
         public static class Status {
-            private int id;
+            private Integer id;
             private String description;
         }
     }
