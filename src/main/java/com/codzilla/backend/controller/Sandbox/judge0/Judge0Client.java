@@ -4,6 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 
 @Slf4j
 @Component
@@ -29,23 +32,43 @@ public class Judge0Client {
                 .body(SubmissionResponse.class);
 
         log.info("Judge0 response: status={}, stdout={}, stderr={}",
-                response.status(), response.stdout(), response.stderr());
+                response.getStatus(), response.getStdout(), response.getStderr());
 
-        return response.status().description();
+        return response.getStatus().getDescription();
     }
 
-    record SubmissionRequest(
-            String source_code,
-            int language_id,
-            String stdin
-    ) {}
 
-    record SubmissionResponse(
-            String stdout,
-            String stderr,
-            String compile_output,
-            Status status
-    ) {
-        record Status(int id, String description) {}
+
+    @Data
+    public static class SubmissionRequest {
+        @JsonProperty("source_code")
+        private String sourceCode;
+
+        @JsonProperty("language_id")
+        private int languageId;
+
+        private String stdin;
+
+        public SubmissionRequest(String sourceCode, int languageId, String stdin) {
+            this.sourceCode = sourceCode;
+            this.languageId = languageId;
+            this.stdin = stdin;
+        }
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class SubmissionResponse {
+        private String stdout;
+        private String stderr;
+        private String compile_output;
+        private Status status;
+
+        @Data
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class Status {
+            private int id;
+            private String description;
+        }
     }
 }
