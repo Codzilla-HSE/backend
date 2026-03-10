@@ -1,12 +1,11 @@
 package com.codzilla.backend.controller.Sandbox.judge0;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
 
 @Slf4j
 @Component
@@ -20,12 +19,14 @@ public class Judge0Client {
                 .build();
     }
 
-    // отправить решение на один тест, вернуть токен
     public String submit(String sourceCode, int languageId, String stdin) {
         var request = new SubmissionRequest(sourceCode, languageId, stdin);
 
+        log.info("Sending to Judge0: source_code={}, language_id={}, stdin={}",
+                request.source_code, request.language_id, request.stdin);
+
         SubmissionResponse response = restClient.post()
-                .uri("/submissions?wait=true")  // wait=true — ждём результат сразу
+                .uri("/submissions?wait=true")
                 .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .body(request)
                 .retrieve()
@@ -37,21 +38,15 @@ public class Judge0Client {
         return response.getStatus().getDescription();
     }
 
-
-
-    @Data
+    // БЕЗ @Data и БЕЗ private — публичные поля, Jackson читает напрямую
     public static class SubmissionRequest {
-        @JsonProperty("source_code")
-        private String sourceCode;
-
-        @JsonProperty("language_id")
-        private int languageId;
-
-        private String stdin;
+        public String source_code;
+        public int language_id;
+        public String stdin;
 
         public SubmissionRequest(String sourceCode, int languageId, String stdin) {
-            this.sourceCode = sourceCode;
-            this.languageId = languageId;
+            this.source_code = sourceCode;
+            this.language_id = languageId;
             this.stdin = stdin;
         }
     }
