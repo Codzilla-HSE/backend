@@ -19,7 +19,7 @@ public class Judge0Client {
                 .build();
     }
 
-    public String submit(String sourceCode, Integer languageId, String stdin) {
+    public String submit(String sourceCode, int languageId, String stdin) {
         var request = new SubmissionRequest(sourceCode, languageId, stdin);
 
         log.info("Sending to Judge0: source_code={}, language_id={}, stdin={}",
@@ -45,7 +45,7 @@ public class Judge0Client {
         public Integer language_id;
         public String stdin;
 
-        public SubmissionRequest(String sourceCode, Integer languageId, String stdin) {
+        public SubmissionRequest(String sourceCode, int languageId, String stdin) {
             this.source_code = sourceCode;
             this.language_id = languageId;
             this.stdin = stdin;
@@ -63,7 +63,7 @@ public class Judge0Client {
         @Data
         @JsonIgnoreProperties(ignoreUnknown = true)
         public static class Status {
-            private Integer id;
+            private int id;
             private String description;
         }
     }
