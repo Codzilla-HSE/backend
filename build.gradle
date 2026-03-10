@@ -24,6 +24,9 @@ dependencies {
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
+    compileOnly 'org.projectlombok:lombok'                    // добавить
+    annotationProcessor 'org.projectlombok:lombok'
+
     runtimeOnly 'org.postgresql:postgresql'
 
     testRuntimeOnly 'com.h2database:h2'
