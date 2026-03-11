@@ -1,6 +1,6 @@
-package com.codzilla.backend.JWTUtils;
+package com.codzilla.backend.auth.JWTUtils;
 
-import com.codzilla.backend.config.Settings;
+import com.codzilla.backend.auth.config.Settings;
 import io.jsonwebtoken.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;

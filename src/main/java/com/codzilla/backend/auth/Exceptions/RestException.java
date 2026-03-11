@@ -1,4 +1,4 @@
-package com.codzilla.backend.Exceptions;
+package com.codzilla.backend.auth.Exceptions;
 
 import lombok.Data;
 import org.springframework.http.HttpStatus;

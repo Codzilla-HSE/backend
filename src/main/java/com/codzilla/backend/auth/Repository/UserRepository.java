@@ -1,6 +1,6 @@
-package com.codzilla.backend.Repository;
+package com.codzilla.backend.auth.Repository;
 
-import com.codzilla.backend.User;
+import com.codzilla.backend.auth.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

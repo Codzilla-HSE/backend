@@ -1,6 +1,6 @@
 package com.codzilla.backend;
 
-import com.codzilla.backend.Repository.UserRepository;
+import com.codzilla.backend.auth.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;

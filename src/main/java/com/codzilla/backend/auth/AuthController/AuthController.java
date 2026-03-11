@@ -1,13 +1,13 @@
-package com.codzilla.backend.AuthController;
+package com.codzilla.backend.auth.AuthController;
 
-import com.codzilla.backend.JWTUtils.JWTUtils;
-import com.codzilla.backend.User;
-import com.codzilla.backend.UserService;
-import com.codzilla.backend.config.Settings;
-import com.codzilla.backend.dto.LoginRequestDTO;
-import com.codzilla.backend.dto.LoginResponseDTO;
-import com.codzilla.backend.dto.RegisterRequestDTO;
-import com.codzilla.backend.dto.RegisterResponseDTO;
+import com.codzilla.backend.auth.JWTUtils.JWTUtils;
+import com.codzilla.backend.auth.User;
+import com.codzilla.backend.auth.UserService;
+import com.codzilla.backend.auth.config.Settings;
+import com.codzilla.backend.auth.dto.LoginRequestDTO;
+import com.codzilla.backend.auth.dto.LoginResponseDTO;
+import com.codzilla.backend.auth.dto.RegisterRequestDTO;
+import com.codzilla.backend.auth.dto.RegisterResponseDTO;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

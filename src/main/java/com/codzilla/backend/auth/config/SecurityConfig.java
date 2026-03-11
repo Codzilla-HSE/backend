@@ -1,8 +1,8 @@
-package com.codzilla.backend.config;
+package com.codzilla.backend.auth.config;
 
-import com.codzilla.backend.AdminAccessDeniedHandler;
-import com.codzilla.backend.HttpStatusEntryPoint;
-import com.codzilla.backend.JWTRequestFilter.JWTRequestFilter;
+import com.codzilla.backend.auth.AdminAccessDeniedHandler;
+import com.codzilla.backend.auth.HttpStatusEntryPoint;
+import com.codzilla.backend.auth.JWTRequestFilter.JWTRequestFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

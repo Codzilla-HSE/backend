@@ -1,6 +1,6 @@
-package com.codzilla.backend;
+package com.codzilla.backend.auth;
 
-import com.codzilla.backend.Repository.UserRepository;
+import com.codzilla.backend.auth.Repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

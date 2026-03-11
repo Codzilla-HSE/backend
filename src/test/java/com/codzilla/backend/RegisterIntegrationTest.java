@@ -1,9 +1,10 @@
 package com.codzilla.backend;
 
-import com.codzilla.backend.Exceptions.UserAlreadyExistsException;
-import com.codzilla.backend.dto.ErrorResponseDTO;
-import com.codzilla.backend.dto.RegisterRequestDTO;
-import com.codzilla.backend.dto.RegisterResponseDTO;
+import com.codzilla.backend.auth.Exceptions.UserAlreadyExistsException;
+import com.codzilla.backend.auth.User;
+import com.codzilla.backend.auth.dto.ErrorResponseDTO;
+import com.codzilla.backend.auth.dto.RegisterRequestDTO;
+import com.codzilla.backend.auth.dto.RegisterResponseDTO;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

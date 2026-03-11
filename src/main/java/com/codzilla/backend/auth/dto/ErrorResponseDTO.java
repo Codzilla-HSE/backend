@@ -1,6 +1,6 @@
-package com.codzilla.backend.dto;
+package com.codzilla.backend.auth.dto;
 
-import com.codzilla.backend.Exceptions.RestException;
+import com.codzilla.backend.auth.Exceptions.RestException;
 import org.springframework.http.HttpStatus;
 
 public record ErrorResponseDTO(

@@ -1,4 +1,4 @@
-package com.codzilla.backend.JWTRequestFilter;
+package com.codzilla.backend.auth.JWTRequestFilter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,7 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
-import com.codzilla.backend.JWTUtils.JWTUtils;
+import com.codzilla.backend.auth.JWTUtils.JWTUtils;
 
 @Slf4j
 @Component

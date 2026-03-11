@@ -1,4 +1,4 @@
-package com.codzilla.backend;
+package com.codzilla.backend.auth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

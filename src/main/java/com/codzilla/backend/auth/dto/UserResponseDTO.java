@@ -1,4 +1,4 @@
-package com.codzilla.backend.dto;
+package com.codzilla.backend.auth.dto;
 
 import java.util.List;
 

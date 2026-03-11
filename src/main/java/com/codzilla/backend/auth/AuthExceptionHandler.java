@@ -1,7 +1,7 @@
-package com.codzilla.backend;
+package com.codzilla.backend.auth;
 
-import com.codzilla.backend.Exceptions.RestException;
-import com.codzilla.backend.dto.ErrorResponseDTO;
+import com.codzilla.backend.auth.Exceptions.RestException;
+import com.codzilla.backend.auth.dto.ErrorResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

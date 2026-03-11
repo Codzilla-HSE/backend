@@ -1,4 +1,4 @@
-package com.codzilla.backend.config;
+package com.codzilla.backend.auth.config;
 
 
 import org.springframework.context.annotation.Bean;

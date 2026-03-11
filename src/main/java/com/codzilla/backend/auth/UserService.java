@@ -1,11 +1,11 @@
-package com.codzilla.backend;
+package com.codzilla.backend.auth;
 
-import com.codzilla.backend.Exceptions.UserAlreadyExistsException;
-import com.codzilla.backend.Exceptions.UserNotFoundException;
-import com.codzilla.backend.Exceptions.UsernameIsTakenException;
-import com.codzilla.backend.Repository.UserRepository;
-import com.codzilla.backend.dto.RegisterRequestDTO;
-import com.codzilla.backend.dto.UserResponseDTO;
+import com.codzilla.backend.auth.Exceptions.UserAlreadyExistsException;
+import com.codzilla.backend.auth.Exceptions.UserNotFoundException;
+import com.codzilla.backend.auth.Exceptions.UsernameIsTakenException;
+import com.codzilla.backend.auth.Repository.UserRepository;
+import com.codzilla.backend.auth.dto.RegisterRequestDTO;
+import com.codzilla.backend.auth.dto.UserResponseDTO;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
