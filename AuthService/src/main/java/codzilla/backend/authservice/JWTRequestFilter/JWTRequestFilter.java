@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -43,7 +42,7 @@ public class JWTRequestFilter extends OncePerRequestFilter {
 
             log.info("Got token.");
             try {
-                String username = jwtUtils.getUsernameFromToken(token);
+                String username = jwtUtils.getEmailFromToken(token);
                 List<String> roles = jwtUtils.getRolesFromToken(token);
                 log.info("{} has jwt. His roles: {}", username, roles);
 

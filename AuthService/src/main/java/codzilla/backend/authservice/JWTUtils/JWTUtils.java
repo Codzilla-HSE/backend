@@ -2,7 +2,6 @@ package codzilla.backend.authservice.JWTUtils;
 
 import codzilla.backend.authservice.config.Settings;
 import io.jsonwebtoken.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
@@ -56,7 +55,7 @@ public class JWTUtils {
         return claims.get("roles", List.class);
     }
 
-    public String getUsernameFromToken(String token) {
+    public String getEmailFromToken(String token) {
         return Jwts.parser()
                 .verifyWith(secret)
                 .build()

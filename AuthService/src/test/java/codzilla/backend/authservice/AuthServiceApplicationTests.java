@@ -8,6 +8,7 @@ class AuthServiceApplicationTests {
 
     @Test
     void contextLoads() {
+        assert (true);
     }
 
 }

@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.Arrays;
 import java.util.List;
@@ -26,11 +27,12 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private static final String[] WHITELIST = {"/auth/**", "/login", "/login.html", "/signup", "/signup.html", "/auth/refresh"};
+    private static final String[] WHITELIST = {"/auth/**", "/login", "/login.html", "/signup", "/signup.html"};
 
 
     private final HttpStatusEntryPoint unauthorizedHandler;
     private final AdminAccessDeniedHandler adminAccessDeniedHandler;
+
     public SecurityConfig(HttpStatusEntryPoint unauthorizedHandler, AdminAccessDeniedHandler adminAccessDeniedHandler) {
         this.unauthorizedHandler = unauthorizedHandler;
         this.adminAccessDeniedHandler = adminAccessDeniedHandler;
@@ -38,7 +40,16 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JWTRequestFilter filter) throws Exception {
-        return http.csrf(csrf -> csrf.disable())
+        return http
+                .cors(cors -> cors.configurationSource(request -> {
+                    CorsConfiguration config = new CorsConfiguration();
+                    config.setAllowedOrigins(Arrays.asList("http://localhost:5173")); // Твой порт Vite
+                    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    config.setAllowedHeaders(Arrays.asList("*"));
+                    config.setAllowCredentials(true);
+                    return config;
+                }))
+                .csrf(csrf -> csrf.disable())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(unauthorizedHandler)
                         .accessDeniedHandler(adminAccessDeniedHandler)
@@ -51,6 +62,11 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
 
 
