@@ -18,7 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -63,8 +62,8 @@ public class AuthController {
         refreshCookie.setSecure(false);
         response.addCookie(refreshCookie);
 
-        UserDetails user = userService.getByEmail(request.email());
-        return ResponseEntity.ok(new LoginResponseDTO(user.getUsername()));
+        User user = userService.getByEmail(request.email());
+        return ResponseEntity.ok(new LoginResponseDTO(user.getNickname()));
     }
 
     @PostMapping("/logout")
@@ -83,7 +82,7 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<?> signUp(@RequestBody RegisterRequestDTO request) {
         userService.registerUser(request);
-        return ResponseEntity.ok(new RegisterResponseDTO(request.username()));
+        return ResponseEntity.ok(new RegisterResponseDTO(request.nickname()));
     }
 
     @PostMapping("/refresh")

@@ -6,13 +6,14 @@ import com.codzilla.backend.auth.Exceptions.UsernameIsTakenException;
 import com.codzilla.backend.auth.Repository.UserRepository;
 import com.codzilla.backend.auth.dto.RegisterRequestDTO;
 import com.codzilla.backend.auth.dto.UserResponseDTO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+@Slf4j
 @Service
 public class UserService {
     private final UserRepository userRepository;
@@ -28,13 +29,13 @@ public class UserService {
             throw new UserAlreadyExistsException();
         }
 
-        if (userRepository.existsByUsername(dto.username())) {
+        if (userRepository.existsByNickname(dto.nickname())) {
             throw new UsernameIsTakenException();
         }
-
+        assert (!dto.email().equals(dto.nickname()));
         var user = User.builder()
                        .email(dto.email())
-                       .username(dto.username())
+                       .nickname(dto.nickname())
                        .password(passwordEncoder.encode(dto.rawPassword())).build();
         userRepository.save(user);
 
@@ -42,7 +43,9 @@ public class UserService {
 
     public User getByEmail(String email) {
         var user = userRepository.findByEmail(email);
+
         if (user.isPresent()) {
+            log.info("username " + user.get().getNickname());
             return user.get();
         } else {
             throw new UserNotFoundException();
@@ -52,7 +55,7 @@ public class UserService {
     public List<UserResponseDTO> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(user -> new UserResponseDTO(
-                        user.getUsername(),
+                        user.getNickname(),
                         user.getEmail(),
                         user.getId(),
                         user.getAuthorities().stream()
@@ -62,10 +65,10 @@ public class UserService {
 
 
     public void createAdmin() {
-        if (!userRepository.existsByUsername("admin")) {
+        if (!userRepository.existsByNickname("a")) {
             User admin = User.builder()
-                             .username("admin")
-                             .email("admin")
+                             .nickname("a")
+                             .email("a@gmail.com")
                              .password(passwordEncoder.encode("0"))
                              .authorities(List.of(new SimpleGrantedAuthority("ADMIN")))
                              .build();

@@ -21,7 +21,7 @@ import java.util.Arrays;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private static final String[] WHITELIST = {"/auth/**"};
+    private static final String[] WHITELIST = {"/auth/**", "/error"};
 
 
     private final HttpStatusEntryPoint unauthorizedHandler;

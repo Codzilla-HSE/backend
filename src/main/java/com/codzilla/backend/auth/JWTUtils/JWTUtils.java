@@ -23,55 +23,56 @@ public class JWTUtils {
 
     public String generateAccessToken(Authentication authentication) {
         List<String> roles = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
+                                           .map(GrantedAuthority::getAuthority)
+                                           .filter(role -> !role.equals("FACTOR_PASSWORD"))
+                                           .toList();
 
         return Jwts.builder()
-                .subject(authentication.getName())
-                .claim("roles", roles)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + settings.getAccessTokenTtl().toMillis()))
-                .signWith(secret)
-                .compact();
+                   .subject(authentication.getName())
+                   .claim("roles", roles)
+                   .issuedAt(new Date())
+                   .expiration(new Date(System.currentTimeMillis() + settings.getAccessTokenTtl().toMillis()))
+                   .signWith(secret)
+                   .compact();
     }
 
     public String generateRefreshToken(Authentication authentication) {
         return Jwts.builder()
-                .subject(authentication.getName())
-                .setId(UUID.randomUUID().toString())
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + settings.getRefreshTokenTtl().toMillis()))
-                .signWith(secret)
-                .compact();
+                   .subject(authentication.getName())
+                   .setId(UUID.randomUUID().toString())
+                   .issuedAt(new Date())
+                   .expiration(new Date(System.currentTimeMillis() + settings.getRefreshTokenTtl().toMillis()))
+                   .signWith(secret)
+                   .compact();
     }
 
     public List<String> getRolesFromToken(String token) {
         Claims claims = Jwts.parser()
-                .verifyWith(secret)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+                            .verifyWith(secret)
+                            .build()
+                            .parseSignedClaims(token)
+                            .getPayload();
 
         return claims.get("roles", List.class);
     }
 
     public String getEmailFromToken(String token) {
         return Jwts.parser()
-                .verifyWith(secret)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+                   .verifyWith(secret)
+                   .build()
+                   .parseSignedClaims(token)
+                   .getPayload()
+                   .getSubject();
     }
 
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                    .verifyWith(secret)
-                    .build()
-                    .parseSignedClaims(token);
+                .verifyWith(secret)
+                .build()
+                .parseSignedClaims(token);
             return true;
-        } catch (Exception e){
+        } catch (Exception e) {
             return false;
         }
 

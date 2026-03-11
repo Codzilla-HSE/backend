@@ -1,7 +1,6 @@
-package com.codzilla.backend;
+package com.codzilla.backend.auth;
 
 import com.codzilla.backend.auth.Exceptions.UserAlreadyExistsException;
-import com.codzilla.backend.auth.User;
 import com.codzilla.backend.auth.dto.ErrorResponseDTO;
 import com.codzilla.backend.auth.dto.RegisterRequestDTO;
 import com.codzilla.backend.auth.dto.RegisterResponseDTO;
@@ -40,7 +39,7 @@ public class RegisterIntegrationTest extends BaseIntegrationTest {
                .andExpect(content().json(objectMapper.writeValueAsString(expectedResponse)));
 
         assert (userRepository.existsByEmail(request.email()));
-        assert (userRepository.existsByUsername(request.username()));
+        assert (userRepository.existsByNickname(request.nickname()));
         User addedUser = userRepository.findByEmail(request.email()).get();
         assert (addedUser.getAuthorities().stream().allMatch(s -> {
             return "USER".equals(s.getAuthority());

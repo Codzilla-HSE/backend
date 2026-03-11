@@ -24,7 +24,7 @@ import java.util.List;
 @Table(name = "users")
 public class User implements UserDetails, CredentialsContainer {
 
-    private String username;
+    private String nickname;
     private String password;
     private String email;
 
@@ -53,7 +53,6 @@ public class User implements UserDetails, CredentialsContainer {
     }
 
     // returns email
-    @Override
     public String getUsername() {
         return email;
     }

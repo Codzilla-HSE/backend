@@ -1,4 +1,4 @@
-package com.codzilla.backend;
+package com.codzilla.backend.auth;
 
 import com.codzilla.backend.auth.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
