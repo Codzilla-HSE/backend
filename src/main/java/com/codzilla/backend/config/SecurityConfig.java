@@ -21,7 +21,7 @@ import java.util.Arrays;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private static final String[] WHITELIST = {"/auth/**", "/login", "/login.html", "/signup", "/signup.html"};
+    private static final String[] WHITELIST = {"/auth/**"};
 
 
     private final HttpStatusEntryPoint unauthorizedHandler;
@@ -37,7 +37,7 @@ public class SecurityConfig {
         return http
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(Arrays.asList("http://localhost:5173")); // Твой порт Vite
+                    config.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
                     config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(Arrays.asList("*"));
                     config.setAllowCredentials(true);
