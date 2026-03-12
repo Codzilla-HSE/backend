@@ -12,13 +12,13 @@ public class Problem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String polygonToken;  // индекс/токен из Polygon
+    private String polygonToken;
 
     @Enumerated(EnumType.STRING)
-    private ProblemType type;     // ALGORITHM, DATA_STRUCTURES и т.д.
+    private ProblemType type;
 
     @Enumerated(EnumType.STRING)
-    private ProblemLevel level;   // EASY, MEDIUM, HARD
+    private ProblemLevel level;
 
     public enum ProblemType {
         ALGORITHM, DATA_STRUCTURES, MATH

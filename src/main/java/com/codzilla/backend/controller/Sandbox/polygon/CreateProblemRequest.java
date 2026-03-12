@@ -4,7 +4,6 @@ import com.codzilla.backend.controller.Sandbox.problem.Problem;
 import lombok.Data;
 import java.util.List;
 
-// То что принимаем от пользователя
 @Data
 public class CreateProblemRequest {
     private String name;           // название задачи

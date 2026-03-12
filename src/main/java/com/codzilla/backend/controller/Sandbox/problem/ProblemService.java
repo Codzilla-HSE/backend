@@ -39,19 +39,17 @@ public class ProblemService {
     }
 
     public String submitSolution(Long problemId, String sourceCode, int languageId) {
-        // 1. достать задачу из БД
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new RuntimeException("Problem not found: " + problemId));
 
-        // 2. получить тесты из Polygon
         PolygonProblem polygonProblem = polygonClient.getProblemTests(problem.getPolygonToken());
 
-        // 3. прогнать по каждому тесту
+
         List<String> results = new ArrayList<>();
         for (var test : polygonProblem.getResult()) {
             String verdict = judge0Client.submit(sourceCode, languageId, test.getInput());
             results.add("Test " + test.getIndex() + ": " + verdict);
-            if (!"Accepted".equals(verdict)) break; // стоп на первой ошибке
+            if (!"Accepted".equals(verdict)) break;
         }
 
         return String.join("\n", results);

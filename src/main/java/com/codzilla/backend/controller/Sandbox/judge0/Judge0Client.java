@@ -24,7 +24,6 @@ public class Judge0Client {
 
     public String submit(String sourceCode, int languageId, String stdin) {
         try {
-            // сериализуем вручную
             String body = objectMapper.writeValueAsString(new SubmissionRequest(sourceCode, languageId, stdin));
             log.info("Sending to Judge0 body: {}", body);
 

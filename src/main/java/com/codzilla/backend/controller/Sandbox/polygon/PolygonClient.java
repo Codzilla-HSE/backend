@@ -1,6 +1,5 @@
 package com.codzilla.backend.controller.Sandbox.polygon;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -71,15 +70,12 @@ public class PolygonClient {
     }
 
 
-    // Подписывает запрос по алгоритму Polygon
     private String buildSignedUrl(String method, TreeMap<String, String> params) {
-        // rand как hex, как в рабочем коде
         String rand = String.format("%06x", new SecureRandom().nextInt(0xFFFFFF));
 
         params.put("apiKey", apiKey);
         params.put("time", String.valueOf(Instant.now().getEpochSecond()));
 
-        // для подписи — БЕЗ url-encoding, просто key=value
         String paramStr = params.entrySet().stream()
                 .map(e -> e.getKey() + "=" + e.getValue())
                 .collect(Collectors.joining("&"));
@@ -90,7 +86,7 @@ public class PolygonClient {
         String hash = sha512(dataToSign);
         params.put("apiSig", rand + hash);
 
-        // для URL — С url-encoding
+
         String query = params.entrySet().stream()
                 .map(e -> URLEncoder.encode(e.getKey(), StandardCharsets.UTF_8)
                         + "=" +
@@ -101,7 +97,7 @@ public class PolygonClient {
     }
 
 
-    // Заменить hmacSha512 на обычный SHA512
+
     private String sha512(String data) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-512");
@@ -118,17 +114,6 @@ public class PolygonClient {
 
 
 
-    private String generateRand() {
-        String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        for (int i = 0; i < 6; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
-        }
-        return sb.toString();
-    }
-
-
 
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -139,7 +124,7 @@ public class PolygonClient {
 
         String url = buildSignedUrl("problem.create", params);
 
-        // всегда получаем как строку
+
         String raw = restClient.post()
                 .uri(url)
                 .retrieve()
@@ -164,7 +149,7 @@ public class PolygonClient {
     public void saveTest(String problemId, int index, String input, String output) {
         var params = new TreeMap<String, String>();
         params.put("problemId", problemId);
-        params.put("testset", "tests");          // добавить это
+        params.put("testset", "tests");
         params.put("testIndex", String.valueOf(index));
         params.put("testInput", input);
         params.put("testOutput", output);

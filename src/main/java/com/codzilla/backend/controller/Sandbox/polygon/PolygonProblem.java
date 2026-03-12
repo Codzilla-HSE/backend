@@ -7,7 +7,7 @@ import java.util.List;
 @Data
 
 public class PolygonProblem {
-    private String status;  // "OK" или "FAILED"
+    private String status;
     private List<Test> result;
 
     @Data
@@ -15,6 +15,6 @@ public class PolygonProblem {
     public static class Test {
         private int index;
         private String input;
-        private String output; // expected output
+        private String output;
     }
 }

@@ -9,7 +9,7 @@ public class PolygonResponse {
     private ProblemResult result;
 
     @Data
-    @JsonIgnoreProperties(ignoreUnknown = true)  // игнорировать неизвестные поля
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ProblemResult {
         private Long id;
         private String owner;
