@@ -20,6 +20,9 @@ jobs:
           java-version: '23'
           distribution: 'temurin'
 
+      - name: Up docker compose
+        run: docker compose up -d compose.yaml
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
