@@ -31,6 +31,7 @@ public class JwtIntegrationTest extends BaseIntegrationTest {
     @Autowired
     JWTUtils jwtUtils;
 
+
     @Autowired
     AuthSettings authSettings;
 
