@@ -2,7 +2,7 @@ package com.codzilla.backend.auth;
 
 
 import com.codzilla.backend.auth.JWTUtils.JWTUtils;
-import com.codzilla.backend.auth.config.Settings;
+import com.codzilla.backend.auth.config.AuthSettings;
 import com.codzilla.backend.auth.dto.LoginRequestDTO;
 import com.codzilla.backend.auth.dto.RegisterRequestDTO;
 import jakarta.transaction.Transactional;
@@ -11,13 +11,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Timer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -34,7 +32,7 @@ public class JwtIntegrationTest extends BaseIntegrationTest {
     JWTUtils jwtUtils;
 
     @Autowired
-    Settings settings;
+    AuthSettings authSettings;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -76,7 +74,7 @@ public class JwtIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void testExpirationToken() throws Exception {
-        settings.setAccessTokenTtl(Duration.ZERO);
+        authSettings.setAccessTokenTtl(Duration.ZERO);
         RegisterRequestDTO registerRequestDTO = new RegisterRequestDTO("nick", "email", "password");
         LoginRequestDTO loginRequestDTO = new LoginRequestDTO(
                 registerRequestDTO.email(),
@@ -102,7 +100,7 @@ public class JwtIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void testTokenShouldExpiredAndRefreshed() throws Exception {
-        settings.setAccessTokenTtl(Duration.ofMillis(1000));
+        authSettings.setAccessTokenTtl(Duration.ofMillis(1000));
         RegisterRequestDTO registerRequestDTO = new RegisterRequestDTO("nick", "email", "password");
         LoginRequestDTO loginRequestDTO = new LoginRequestDTO(
                 registerRequestDTO.email(),

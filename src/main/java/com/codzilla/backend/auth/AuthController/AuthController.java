@@ -3,7 +3,7 @@ package com.codzilla.backend.auth.AuthController;
 import com.codzilla.backend.auth.JWTUtils.JWTUtils;
 import com.codzilla.backend.auth.User;
 import com.codzilla.backend.auth.UserService;
-import com.codzilla.backend.auth.config.Settings;
+import com.codzilla.backend.auth.config.AuthSettings;
 import com.codzilla.backend.auth.dto.LoginRequestDTO;
 import com.codzilla.backend.auth.dto.LoginResponseDTO;
 import com.codzilla.backend.auth.dto.RegisterRequestDTO;
@@ -26,16 +26,16 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthenticationManager authManager;
     private final JWTUtils jwtUtils;
-    private final Settings settings;
+    private final AuthSettings authSettings;
     private final UserService userService;
 
     @Autowired
     public AuthController(AuthenticationManager authManager,
-                          JWTUtils jwtUtils, Settings settings, UserService userService) {
+                          JWTUtils jwtUtils, AuthSettings authSettings, UserService userService) {
         this.userService = userService;
         this.authManager = authManager;
         this.jwtUtils = jwtUtils;
-        this.settings = settings;
+        this.authSettings = authSettings;
     }
 
     @PostMapping("/login")
@@ -51,14 +51,14 @@ public class AuthController {
         jwtCookie.setHttpOnly(true);
         jwtCookie.setSecure(false);
         jwtCookie.setPath("/");
-        jwtCookie.setMaxAge((int) settings.getRefreshTokenTtl().toSeconds());
+        jwtCookie.setMaxAge((int) authSettings.getRefreshTokenTtl().toSeconds());
         response.addCookie(jwtCookie);
 
         var refreshToken = jwtUtils.generateRefreshToken(auth);
         Cookie refreshCookie = new Cookie("refresh_jwt", refreshToken);
         refreshCookie.setPath("/");
         refreshCookie.setHttpOnly(true);
-        refreshCookie.setMaxAge((int) settings.getRefreshTokenTtl().toSeconds());
+        refreshCookie.setMaxAge((int) authSettings.getRefreshTokenTtl().toSeconds());
         refreshCookie.setSecure(false);
         response.addCookie(refreshCookie);
 
@@ -115,7 +115,7 @@ public class AuthController {
             cookie.setHttpOnly(true);
             cookie.setSecure(false);
             cookie.setPath("/");
-            cookie.setMaxAge((int) settings.getRefreshTokenTtl().toSeconds());
+            cookie.setMaxAge((int) authSettings.getRefreshTokenTtl().toSeconds());
             response.addCookie(cookie);
             return ResponseEntity.ok("Jwt access was updated.");
 
