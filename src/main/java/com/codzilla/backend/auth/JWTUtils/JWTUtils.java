@@ -1,6 +1,6 @@
 package com.codzilla.backend.auth.JWTUtils;
 
-import com.codzilla.backend.auth.config.Settings;
+import com.codzilla.backend.auth.config.AuthSettings;
 import io.jsonwebtoken.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -15,10 +15,10 @@ import java.util.UUID;
 public class JWTUtils {
 
     private static SecretKey secret = Jwts.SIG.HS256.key().build();
-    private final Settings settings;
+    private final AuthSettings authSettings;
 
-    public JWTUtils(Settings settings) {
-        this.settings = settings;
+    public JWTUtils(AuthSettings authSettings) {
+        this.authSettings = authSettings;
     }
 
     public String generateAccessToken(Authentication authentication) {
@@ -31,7 +31,7 @@ public class JWTUtils {
                    .subject(authentication.getName())
                    .claim("roles", roles)
                    .issuedAt(new Date())
-                   .expiration(new Date(System.currentTimeMillis() + settings.getAccessTokenTtl().toMillis()))
+                   .expiration(new Date(System.currentTimeMillis() + authSettings.getAccessTokenTtl().toMillis()))
                    .signWith(secret)
                    .compact();
     }
@@ -41,7 +41,7 @@ public class JWTUtils {
                    .subject(authentication.getName())
                    .setId(UUID.randomUUID().toString())
                    .issuedAt(new Date())
-                   .expiration(new Date(System.currentTimeMillis() + settings.getRefreshTokenTtl().toMillis()))
+                   .expiration(new Date(System.currentTimeMillis() + authSettings.getRefreshTokenTtl().toMillis()))
                    .signWith(secret)
                    .compact();
     }

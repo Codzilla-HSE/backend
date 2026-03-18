@@ -1,11 +1,12 @@
 package com.codzilla.backend.auth.dto;
 
 import java.util.List;
+import java.util.UUID;
 
 public record UserResponseDTO(
         String nickname,
         String email,
-        Long id,
+        UUID id,
         List<String> authorities
 ) {
 }

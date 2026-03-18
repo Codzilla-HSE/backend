@@ -1,6 +1,6 @@
 services:
   postgres:
-    container_name: codzilla_postgres
+    container_name: codzilla-postgres
     image: postgres:15
     ports:
       - "5433:5432"
@@ -16,5 +16,43 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7.2-alpine
+    container_name: codzilla-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server 
+      --requirepass redis-password
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: codzilla-redis-insight
+    restart: always
+    environment:
+      - RDI_PORT=5540
+    ports:
+      - "8001:5540"
+    depends_on:
+      - redis
+
+  minio:
+    image: minio/minio
+    container_name: codzilla-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio-user
+      MINIO_ROOT_PASSWORD: minio-password
+    command: server /data --console-address ":9001"
+
 volumes:
+  redis_data:
   postgres_data:

@@ -9,7 +9,7 @@ import java.time.Duration;
 @Configuration
 @ConfigurationProperties(prefix = "app.security.jwt")
 @Data
-public class Settings {
+public class AuthSettings {
     private Duration accessTokenTtl;
     private Duration refreshTokenTtl;
 }
