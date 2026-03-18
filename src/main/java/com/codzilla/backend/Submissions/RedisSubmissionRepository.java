@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class RedisSubmissionRepository implements SubmissionRepository {
@@ -22,7 +23,7 @@ public class RedisSubmissionRepository implements SubmissionRepository {
     }
 
     @Override
-    public Optional<Submission> get(String id) {
+    public Optional<Submission> get(UUID id) {
         Object value = redisTemplate.opsForValue().get("submission:"+id);
         if (value == null) return Optional.empty();
         return Optional.of(objectMapper.convertValue(value, Submission.class));

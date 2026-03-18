@@ -1,4 +1,4 @@
-package com.codzilla.backend.Submissions;
+package com.codzilla.backend.S3;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,7 @@ import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 public class S3Initialization {
 
     @Autowired
-    SubmissionSettings settings;
+    S3Settings settings;
 
     @Autowired
     S3Client s3Client;
@@ -24,11 +24,11 @@ public class S3Initialization {
     @EventListener(ApplicationReadyEvent.class)
     public void initBucket() {
         try {
-            s3Client.headBucket(HeadBucketRequest.builder().bucket(settings.s3().bucketName()).build());
-            log.info("Already have bucket: " + settings.s3().bucketName());
+            s3Client.headBucket(HeadBucketRequest.builder().bucket(settings.bucketName()).build());
+            log.info("Already have bucket: " + settings.bucketName());
         } catch (NoSuchBucketException e) {
-            s3Client.createBucket(CreateBucketRequest.builder().bucket(settings.s3().bucketName()).build());
-            log.info("Create bucket: " + settings.s3().bucketName());
+            s3Client.createBucket(CreateBucketRequest.builder().bucket(settings.bucketName()).build());
+            log.info("Create bucket: " + settings.bucketName());
         }
     }
 }
