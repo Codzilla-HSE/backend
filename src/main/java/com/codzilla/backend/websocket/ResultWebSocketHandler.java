@@ -2,6 +2,7 @@ package com.codzilla.backend.websocket;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -12,21 +13,28 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class ResultWebSocketHandler extends TextWebSocketHandler {
 
-
     private final ConcurrentHashMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
-    @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
+    private final ConcurrentHashMap<String, String> pendingResults = new ConcurrentHashMap<>();
 
+    @Override
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         String submissionId = getSubmissionId(session);
         if (submissionId != null) {
             sessions.put(submissionId, session);
             log.info("WebSocket connected: {}", submissionId);
+
+
+            String pending = pendingResults.remove(submissionId);
+            if (pending != null) {
+                session.sendMessage(new TextMessage(pending));
+                sessions.remove(submissionId);
+            }
         }
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, org.springframework.web.socket.CloseStatus status) {
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         String submissionId = getSubmissionId(session);
         if (submissionId != null) {
             sessions.remove(submissionId);
@@ -43,6 +51,10 @@ public class ResultWebSocketHandler extends TextWebSocketHandler {
             } catch (Exception e) {
                 log.error("Failed to send WebSocket message: {}", e.getMessage());
             }
+        } else {
+
+            log.info("Session not ready, caching result for: {}", submissionId);
+            pendingResults.put(submissionId, result);
         }
     }
 
