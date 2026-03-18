@@ -1,6 +1,7 @@
 package com.codzilla.backend.kafka;
 
 import com.codzilla.backend.controller.Sandbox.problem.ProblemService;
+import com.codzilla.backend.submission.SubmissionService;
 import com.codzilla.backend.websocket.ResultWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ public class SubmissionConsumer {
 
     private final ProblemService problemService;
     private final ResultWebSocketHandler webSocketHandler;
+    private final SubmissionService submissionService;
 
     @KafkaListener(topics = "submissions", groupId = "codzilla-group")
     public void consume(SubmissionMessage message) {
@@ -24,9 +26,11 @@ public class SubmissionConsumer {
                     message.getSourceCode(),
                     message.getLanguageId()
             );
+            submissionService.updateStatus(message.getSubmissionId(), result);
             webSocketHandler.sendResult(message.getSubmissionId(), result);
         } catch (Exception e) {
             log.error("Error processing submission: {}", e.getMessage());
+            submissionService.updateStatus(message.getSubmissionId(), "Error: " + e.getMessage());
             webSocketHandler.sendResult(message.getSubmissionId(), "Error: " + e.getMessage());
         }
     }
