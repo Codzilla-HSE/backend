@@ -9,7 +9,6 @@ public record S3Settings(
         String secretKey,
         String region,
         String bucketName
-
 ) {
 }
 
