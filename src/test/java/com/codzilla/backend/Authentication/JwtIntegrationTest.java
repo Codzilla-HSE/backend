@@ -2,7 +2,7 @@ package com.codzilla.backend.Authentication;
 
 
 import com.codzilla.backend.Authentication.JWTUtils.JWTUtils;
-import com.codzilla.backend.Authentication.config.Settings;
+import com.codzilla.backend.Authentication.config.AuthSettings;
 import com.codzilla.backend.Authentication.dto.LoginRequestDTO;
 import com.codzilla.backend.Authentication.dto.RegisterRequestDTO;
 import jakarta.transaction.Transactional;
@@ -32,7 +32,7 @@ public class JwtIntegrationTest extends BaseIntegrationTest {
     JWTUtils jwtUtils;
 
     @Autowired
-    Settings settings;
+    AuthSettings settings;
 
     @BeforeEach
     void setUp() throws Exception {
