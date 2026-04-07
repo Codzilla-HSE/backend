@@ -17,22 +17,20 @@ import java.util.List;
 @Component
 public class PendingSolutionCollector {
     SubmissionService submissionService;
-
+    private final int amountOfSubmissions = 50;
     public PendingSolutionCollector(SubmissionService submissionService) {
         this.submissionService = submissionService;
     }
-//    @Autowired
-//    TestRunner testRunner;
 
-    @Scheduled(fixedRate = 1000)
+    @Scheduled(fixedDelay = 1000)
     void startTestSubmissions() {
-        var toTestSubmissions = submissionService.getAndSetTestingStatusFor50PendingSubmissions();
-
+        var toTestSubmissions = // забираем под локом и сразу ставим Testing статус
+                submissionService.getAndSetTestingStatusForPendingSubmissions(amountOfSubmissions);
         for (var submission : toTestSubmissions) {
             try {
-//                testRunner.startTest(submission);
-                log.info("Start test: " + submission);
+                submissionService.sendToTest(submission);
             } catch (Exception e) {
+                submissionService.setError(submission);
                 log.info("error while testing " + submission);
             }
         }
