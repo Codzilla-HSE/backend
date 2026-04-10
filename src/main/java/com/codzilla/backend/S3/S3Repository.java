@@ -1,6 +1,5 @@
-package com.codzilla.backend.Submissions;
+package com.codzilla.backend.S3;
 
-import com.codzilla.backend.S3.S3Settings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -15,38 +14,36 @@ import java.util.UUID;
 
 
 @Repository
-public class S3SubmissionRepository implements SubmissionRepository {
+public class S3Repository {
     @Autowired
     S3Client s3Client;
 
     @Autowired
     S3Settings settings;
 
-    @Override
-    public void save(Submission submission) {
+    public void save(byte[] content, String path) {
         s3Client.putObject(
                 PutObjectRequest.builder()
                                 .contentType("text/plain")
                                 .bucket(settings.bucketName())
-                                .key("submissions/" + submission.id() + ".cpp")
+                                .key(path)
                                 .build(),
-                RequestBody.fromBytes(submission.content())
+                RequestBody.fromBytes(content)
         );
     }
 
-    @Override
-    public Optional<Submission> get(UUID id) {
+
+    public Optional<byte[]> get(String path) {
         try {
-            String code = s3Client.getObject(
+            byte[] fileContent = s3Client.getObject(
                     GetObjectRequest.builder()
                                     .bucket(settings.bucketName())
-                                    .key("submissions/" + id + ".cpp") // todo: cpp?
+                                    .key(path)
                                     .build(),
                     ResponseTransformer.toBytes()
 
-            ).asUtf8String();
-            Submission result = new Submission(id, UUID.fromString(""), "".getBytes(), Language.CPP);
-            return Optional.of(result);
+            ).asByteArray();
+            return Optional.of(fileContent);
         } catch (NoSuchKeyException ex) {
             return Optional.empty();
         }
