@@ -37,13 +37,10 @@ public class PolygonClient {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public PolygonClient() {
-        /*
-         конструктор, в котором создается restClient с базовым URL, а также мы говорим, что отправка / принятие сообщений от сервера мы хотим в формате json.
-         */
         this.restClient = RestClient.builder()
                 .baseUrl(BASE_URL)
-                .defaultHeader("Accept", "application/json") // Это сообщение серверу: «Я ожидаю, что ты ответишь мне в формате JSON».
-                .defaultHeader("Content-Type", "application/json") // Это сообщение серверу: «Я сейчас присылаю тебе данные в формате JSON».
+                .defaultHeader("Accept", "application/json")
+                .defaultHeader("Content-Type", "application/json")
                 .build();
     }
 
@@ -65,9 +62,7 @@ public class PolygonClient {
 
         try {
             PolygonProblem result = objectMapper.readValue(raw, PolygonProblem.class);
-//            if (!"OK".equals(result.getStatus())) {
-//                throw new RuntimeException("Polygon error getting tests: " + raw);
-//            }
+
             if ("OK".equals(result.getStatus()) && result.getResult() != null) {
                 for (PolygonProblem.Test test : result.getResult()) {
                     if (test.getInputBase64() != null && !test.getInputBase64().isEmpty()) {
@@ -116,7 +111,7 @@ public class PolygonClient {
             byte[] bytes = md.digest(data.getBytes("UTF-8")); // явно UTF-8
             StringBuilder sb = new StringBuilder();
             for (byte b : bytes) {
-                sb.append(String.format("%02x", b)); // %02x гарантирует ведущий ноль
+                sb.append(String.format("%02x", b));
             }
             return sb.toString();
         } catch (Exception e) {

@@ -6,14 +6,14 @@ import java.util.List;
 
 @Data
 public class CreateProblemRequest {
-    private String name;           // название задачи
+    private String name;
     private Problem.ProblemType type;
     private Problem.ProblemLevel level;
-    private List<TestCase> tests;  // список тестов
+    private List<TestCase> tests;
 
     @Data
     public static class TestCase {
-        private String input;   // "1 2"
-        private String output;  // "3"
+        private String input;
+        private String output;
     }
 }

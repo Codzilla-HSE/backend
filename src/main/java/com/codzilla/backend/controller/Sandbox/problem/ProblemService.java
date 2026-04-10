@@ -22,12 +22,12 @@ public class ProblemService {
     private final SubmissionRepository submissionRepository;
 
     public Problem createProblem(CreateProblemRequest request) {
-        // Мы не создаем задачу в Polygon через API (это невозможно),
-        // но мы сохраняем её в нашу БД, указывая ID уже созданной в Polygon задачи.
+
+
 
         Problem problem = new Problem();
-        // ВАЖНО: В запросе теперь должен приходить polygonId вручную созданной задачи
-        problem.setPolygonToken(request.getName()); // или добавь поле polygonId в Request
+
+        problem.setPolygonToken(request.getName());
         problem.setType(request.getType());
         problem.setLevel(request.getLevel());
 
@@ -38,16 +38,12 @@ public class ProblemService {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new RuntimeException("Problem not found"));
 
-        // Берем тесты через наш новый идеальный прокси (с кэшем)
+
         List<PolygonProblem.Test> tests = polygonProblemService.getTests(problem.getPolygonToken());
-
-        // Для простоты примера берем первый тест (в боевой системе нужно прогонять все)
         PolygonProblem.Test mainTest = tests.get(0);
-
-        // 1. Отправляем в Judge0 и получаем токен
         String token = judge0Client.submitAsync(sourceCode, languageId, mainTest.getInput(), mainTest.getOutput());
 
-        // 2. Сохраняем в БД со статусом IN_QUEUE
+
         Submission sub = new Submission();
         sub.setProblemId(problemId);
         sub.setSourceCode(sourceCode);

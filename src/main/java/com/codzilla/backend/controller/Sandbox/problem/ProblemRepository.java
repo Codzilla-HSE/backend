@@ -7,12 +7,5 @@ import org.springframework.stereotype.Repository;
 public interface ProblemRepository extends JpaRepository<Problem, Long> {
 }
 
-/*
-    JpaRepository уже даёт :
-     save(problem)        — сохранить
-     findById(id)         — найти по id
-     findAll()            — все задачи
-     deleteById(id)       — удалить
-*/
 
 

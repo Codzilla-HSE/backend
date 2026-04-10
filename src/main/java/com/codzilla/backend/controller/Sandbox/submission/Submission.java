@@ -1,4 +1,4 @@
-// хранит историю отправки решений
+
 package com.codzilla.backend.controller.Sandbox.submission;
 
 import jakarta.persistence.*;
@@ -21,19 +21,19 @@ public class Submission {
     private Long id;
 
     private Long problemId;
-    private Long userId; // Если уже есть сущность юзера
+    private Long userId;
 
     @Column(columnDefinition = "TEXT")
     private String sourceCode;
 
     private Integer languageId;
 
-    private String judge0Token; // Токен, который вернет Judge0
+    private String judge0Token;
 
     @Enumerated(EnumType.STRING)
-    private Status status; // IN_QUEUE, PROCESSING, ACCEPTED, WRONG_ANSWER, ERROR
+    private Status status;
 
-    private String resultDetails; // Текст ошибки или результат
+    private String resultDetails;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -41,7 +41,7 @@ public class Submission {
     private int retryCount = 0;
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    // Метод для обновления времени (вызывай его при каждом сохранении)
+
     @PreUpdate
     public void onUpdate() {
         this.updatedAt = LocalDateTime.now();

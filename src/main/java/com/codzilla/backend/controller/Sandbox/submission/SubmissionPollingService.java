@@ -24,13 +24,13 @@ public class SubmissionPollingService {
 
     @Scheduled(fixedDelay = 2000)
     public void pollStatuses() {
-        // Находим все активные задачи
+
         List<Submission> pendingSubmissions = submissionRepository.findAllByStatus(Submission.Status.IN_QUEUE);
 
         for (Submission sub : pendingSubmissions) {
-            // Логика Retry: если прошло больше 30 секунд
+
             if (sub.getUpdatedAt().isBefore(LocalDateTime.now().minusSeconds(30))) {
-                if (sub.getRetryCount() < 3) { // максимум 3 попытки
+                if (sub.getRetryCount() < 3) {
                     log.warn("Submission {} timed out. Retrying... (Attempt {})", sub.getId(), sub.getRetryCount() + 1);
                     restartSubmission(sub);
                     continue;
@@ -42,7 +42,7 @@ public class SubmissionPollingService {
                 }
             }
 
-            // Обычный опрос статуса (твой текущий код)
+
             var response = judge0Client.getSubmissionStatus(sub.getJudge0Token());
             if (response != null && response.getStatus() != null) {
                 if (response.getStatus().getId() > 2) {
@@ -54,12 +54,12 @@ public class SubmissionPollingService {
     }
 
     private void restartSubmission(Submission sub) {
-        // Получаем задачу, чтобы вытащить тесты
+
         Problem problem = problemRepository.findById(sub.getProblemId()).orElseThrow();
         var tests = polygonProblemService.getTests(problem.getPolygonToken());
         var mainTest = tests.get(0);
 
-        // Переотправляем
+
         String newToken = judge0Client.submitAsync(sub.getSourceCode(), sub.getLanguageId(), mainTest.getInput(), mainTest.getOutput());
 
         sub.setJudge0Token(newToken);
@@ -86,7 +86,7 @@ public class SubmissionPollingService {
 
         log.info("Submission {} finished with verdict: {}", sub.getId(), description);
 
-        // ТУТ ВАЖНО: Когда статус обновился, ты можешь через WebSocket
-        // отправить уведомление игроку: "Твой код прошел/упал!"
+
+
     }
 }

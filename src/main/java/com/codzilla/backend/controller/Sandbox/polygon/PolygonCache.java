@@ -13,7 +13,7 @@ public class PolygonCache {
 
     private final Cache<String, List<PolygonProblem.Test>> cache =
             CacheBuilder.newBuilder()
-                    .expireAfterWrite(10, TimeUnit.MINUTES) // TTL
+                    .expireAfterWrite(10, TimeUnit.MINUTES)
                     .maximumSize(1000)
                     .build();
 
