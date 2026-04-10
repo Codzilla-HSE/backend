@@ -13,6 +13,7 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Instant;
 
+import java.util.Base64;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -33,12 +34,16 @@ public class PolygonClient {
     private String apiSecret;
 
     private final RestClient restClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public PolygonClient() {
+        /*
+         конструктор, в котором создается restClient с базовым URL, а также мы говорим, что отправка / принятие сообщений от сервера мы хотим в формате json.
+         */
         this.restClient = RestClient.builder()
                 .baseUrl(BASE_URL)
-                .defaultHeader("Accept", "application/json")
-                .defaultHeader("Content-Type", "application/json")
+                .defaultHeader("Accept", "application/json") // Это сообщение серверу: «Я ожидаю, что ты ответишь мне в формате JSON».
+                .defaultHeader("Content-Type", "application/json") // Это сообщение серверу: «Я сейчас присылаю тебе данные в формате JSON».
                 .build();
     }
 
@@ -60,8 +65,15 @@ public class PolygonClient {
 
         try {
             PolygonProblem result = objectMapper.readValue(raw, PolygonProblem.class);
-            if (!"OK".equals(result.getStatus())) {
-                throw new RuntimeException("Polygon error getting tests: " + raw);
+//            if (!"OK".equals(result.getStatus())) {
+//                throw new RuntimeException("Polygon error getting tests: " + raw);
+//            }
+            if ("OK".equals(result.getStatus()) && result.getResult() != null) {
+                for (PolygonProblem.Test test : result.getResult()) {
+                    if (test.getInputBase64() != null && !test.getInputBase64().isEmpty()) {
+                        test.setInput(new String(Base64.getDecoder().decode(test.getInputBase64())));
+                    }
+                }
             }
             return result;
         } catch (Exception e) {
@@ -111,12 +123,6 @@ public class PolygonClient {
             throw new RuntimeException("Failed to sign request", e);
         }
     }
-
-
-
-
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public String createProblem(String name) {
         var params = new TreeMap<String, String>();

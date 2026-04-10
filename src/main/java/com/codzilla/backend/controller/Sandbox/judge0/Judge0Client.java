@@ -22,39 +22,68 @@ public class Judge0Client {
                 .build();
     }
 
-    public String submit(String sourceCode, int languageId, String stdin) {
-        try {
-            String body = objectMapper.writeValueAsString(new SubmissionRequest(sourceCode, languageId, stdin));
-            log.info("Sending to Judge0 body: {}", body);
+    // В классе Judge0Client меняем метод submit:
 
+    public String submitAsync(String sourceCode, int languageId, String stdin, String expectedOutput) {
+        try {
+            String body = objectMapper.writeValueAsString(
+                    new SubmissionRequest(sourceCode, languageId, stdin, expectedOutput)
+            );
+
+            // Убрали wait=true! Теперь запрос моментальный.
             String raw = restClient.post()
-                    .uri("/submissions?wait=true")
+                    .uri("/submissions?base64_encoded=false")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(body)
                     .retrieve()
-                    .onStatus(status -> true, (req, res) -> {})
                     .body(String.class);
 
-            log.info("Judge0 response: {}", raw);
-
-            SubmissionResponse response = objectMapper.readValue(raw, SubmissionResponse.class);
-            return response.getStatus().getDescription();
+            // Judge0 вернет нам только {"token": "какой-то-uuid"}
+            TokenResponse tokenResponse = objectMapper.readValue(raw, TokenResponse.class);
+            return tokenResponse.getToken();
 
         } catch (Exception e) {
-            throw new RuntimeException("Judge0 error: " + e.getMessage(), e);
+            log.error("Judge0 submission failed", e);
+            return null;
         }
     }
+
+    public SubmissionResponse getSubmissionStatus(String token) {
+        try {
+            String raw = restClient.get()
+                    .uri("/submissions/" + token + "?base64_encoded=false")
+                    .retrieve()
+                    .body(String.class);
+
+            return objectMapper.readValue(raw, SubmissionResponse.class);
+        } catch (Exception e) {
+            log.error("Failed to fetch status for token: " + token, e);
+            return null;
+        }
+    }
+
+    // Добавь внутренний класс для токена
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class TokenResponse {
+        private String token;
+    }
+
 
     public static class SubmissionRequest {
         public String source_code;
         public Integer language_id;
         public String stdin;
+        String expectedOutput;
 
-        public SubmissionRequest(String sourceCode, int languageId, String stdin) {
+        public SubmissionRequest(String sourceCode, int languageId, String stdin, String expectedOutput) {
             this.source_code = sourceCode;
             this.language_id = languageId;
             this.stdin = stdin;
+            this.expectedOutput = expectedOutput;
+
         }
+
     }
 
     @Data

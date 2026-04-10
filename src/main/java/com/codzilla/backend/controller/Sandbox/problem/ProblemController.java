@@ -1,8 +1,7 @@
 package com.codzilla.backend.controller.Sandbox.problem;
 
 import com.codzilla.backend.controller.Sandbox.polygon.CreateProblemRequest;
-import com.codzilla.backend.kafka.SubmissionMessage;
-import com.codzilla.backend.kafka.SubmissionProducer;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +14,7 @@ import java.util.UUID;
 public class ProblemController {
 
     private final ProblemService problemService;
-    private final SubmissionProducer submissionProducer;
+
 
     @PostMapping("/create")
     public ResponseEntity<Problem> createProblem(@RequestBody CreateProblemRequest request) {
@@ -37,8 +36,11 @@ public class ProblemController {
             @PathVariable Long id,
             @RequestParam int languageId,
             @RequestBody String sourceCode) {
-        String submissionId = UUID.randomUUID().toString();
-        submissionProducer.send(new SubmissionMessage(submissionId, id, sourceCode, languageId));
-        return ResponseEntity.ok(submissionId);
+
+        // Добавляем временный userId = 1L.
+        // Когда прикрутишь Spring Security, здесь будет что-то вроде user.getId()
+        String result = problemService.submitSolution(1L, id, sourceCode, languageId);
+
+        return ResponseEntity.ok(result);
     }
 }
