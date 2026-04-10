@@ -28,9 +28,9 @@ public class S3SubmissionRepository implements SubmissionRepository {
                 PutObjectRequest.builder()
                                 .contentType("text/plain")
                                 .bucket(settings.bucketName())
-                                .key("submissions/" + submission.id() + ".cpp")
+                                .key("submissions/" + submission.getId() + ".cpp")
                                 .build(),
-                RequestBody.fromBytes(submission.content())
+                RequestBody.fromBytes(submission.getContent())
         );
     }
 
@@ -40,12 +40,12 @@ public class S3SubmissionRepository implements SubmissionRepository {
             String code = s3Client.getObject(
                     GetObjectRequest.builder()
                                     .bucket(settings.bucketName())
-                                    .key("submissions/" + id + ".cpp") // todo: cpp?
+                                    .key("submissions/" + id)
                                     .build(),
                     ResponseTransformer.toBytes()
 
             ).asUtf8String();
-            Submission result = new Submission(id, UUID.fromString(""), "".getBytes(), Language.CPP);
+            Submission result = new Submission(id, UUID.fromString(""), "".getBytes(), SubmissionLanguage.CPP, SubmissionStatus.TESTING);
             return Optional.of(result);
         } catch (NoSuchKeyException ex) {
             return Optional.empty();

@@ -1,13 +1,29 @@
 package com.codzilla.backend.Submissions;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Transient;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
+
 import java.util.UUID;
 
-public record Submission(
-        UUID id,
-        UUID userId,
-        byte[] content,
-        Language language
-) {
-}
+@Entity
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class Submission {
+    @Id
+    @GeneratedValue
+    @UuidGenerator
+    UUID id;
+    UUID userId;
 
-enum Language { CPP, PY, JAVA }
+    @Transient
+    byte[] content;
+    SubmissionLanguage language;
+    SubmissionStatus status;
+}

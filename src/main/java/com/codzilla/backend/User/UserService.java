@@ -34,7 +34,7 @@ public class UserService {
         if (userRepository.existsByNickname(dto.nickname())) {
             throw new UsernameIsTakenException();
         }
-        assert (!dto.email().equals(dto.nickname()));
+
         var user = User.builder()
                        .email(dto.email())
                        .nickname(dto.nickname())

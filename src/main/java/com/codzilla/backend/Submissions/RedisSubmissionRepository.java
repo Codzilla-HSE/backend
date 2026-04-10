@@ -19,7 +19,7 @@ public class RedisSubmissionRepository implements SubmissionRepository {
 
     @Override
     public void save(Submission submission) {
-        redisTemplate.opsForValue().set("submission:" + submission.id(), submission);
+        redisTemplate.opsForValue().set("submission:" + submission.getId(), submission);
     }
 
     @Override
