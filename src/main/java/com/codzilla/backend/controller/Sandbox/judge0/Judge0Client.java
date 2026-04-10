@@ -22,7 +22,7 @@ public class Judge0Client {
                 .build();
     }
 
-    // В классе Judge0Client меняем метод submit:
+
 
     public String submitAsync(String sourceCode, int languageId, String stdin, String expectedOutput) {
         try {
@@ -30,7 +30,7 @@ public class Judge0Client {
                     new SubmissionRequest(sourceCode, languageId, stdin, expectedOutput)
             );
 
-            // Убрали wait=true! Теперь запрос моментальный.
+
             String raw = restClient.post()
                     .uri("/submissions?base64_encoded=false")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -38,7 +38,7 @@ public class Judge0Client {
                     .retrieve()
                     .body(String.class);
 
-            // Judge0 вернет нам только {"token": "какой-то-uuid"}
+
             TokenResponse tokenResponse = objectMapper.readValue(raw, TokenResponse.class);
             return tokenResponse.getToken();
 
@@ -62,7 +62,7 @@ public class Judge0Client {
         }
     }
 
-    // Добавь внутренний класс для токена
+
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class TokenResponse {
