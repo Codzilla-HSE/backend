@@ -28,6 +28,15 @@ class S3RepositoryTest {
 
     @Test
     void get() {
+        byte[] content = "123".getBytes();
+
+        String path = "test/123";
+
+        repository.save(
+                content,
+                path
+        );
+
         var res = repository.get("test/123");
         assertTrue(res.isPresent());
         assertEquals(
