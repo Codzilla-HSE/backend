@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -18,11 +20,19 @@ class S3RepositoryTest {
 
         String path = "test/123";
 
-        repository.save(content, path);
+        repository.save(
+                content,
+                path
+        );
     }
 
     @Test
     void get() {
-        assertEquals("123", repository.get("test/123").toString());
+        var res = repository.get("test/123");
+        assertTrue(res.isPresent());
+        assertEquals(
+                "123",
+                new String(res.get())
+        );
     }
 }
