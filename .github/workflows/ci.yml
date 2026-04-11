@@ -28,8 +28,6 @@ jobs:
 
       - name: Run tests
         run: ./gradlew test
-        env:
-          SPRING_PROFILES_ACTIVE: dev
 
       - name: Build jar
         run: ./gradlew bootJar
