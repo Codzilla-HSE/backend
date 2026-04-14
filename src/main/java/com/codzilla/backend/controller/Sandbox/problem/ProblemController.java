@@ -19,7 +19,6 @@ public class ProblemController {
 
     private final ProblemService problemService;
 
-
     @PostMapping("/create")
     public ResponseEntity<Problem> createProblem(@RequestBody CreateProblemRequest request) {
         Problem saved = problemService.createProblem(request);
@@ -42,11 +41,7 @@ public class ProblemController {
             @PathVariable Long id,
             @RequestParam int languageId,
             @RequestBody String sourceCode) {
-
-
-
         String result = problemService.submitSolution(1L, id, sourceCode, languageId);
-
         return ResponseEntity.ok(result);
     }
 }

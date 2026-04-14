@@ -25,7 +25,9 @@ import java.util.stream.Collectors;
 @Component
 public class PolygonClient {
 
-    private static final String BASE_URL = "https://polygon.codeforces.com/api/";
+    @Value("${polygon.api.url}")
+    public String baseUrl;
+
 
     @Value("${polygon.api.key}")
     private String apiKey;
@@ -38,7 +40,7 @@ public class PolygonClient {
 
     public PolygonClient() {
         this.restClient = RestClient.builder()
-                .baseUrl(BASE_URL)
+                .baseUrl(baseUrl)
                 .defaultHeader("Accept", "application/json")
                 .defaultHeader("Content-Type", "application/json")
                 .build();

@@ -24,48 +24,13 @@ public class SubmissionPollingService {
 
     @Scheduled(fixedDelay = 2000)
     public void pollStatuses() {
-
-        List<Submission> pendingSubmissions = submissionRepository.findAllByStatus(Submission.Status.IN_QUEUE);
-
-        for (Submission sub : pendingSubmissions) {
-
-            if (sub.getUpdatedAt().isBefore(LocalDateTime.now().minusSeconds(30))) {
-                if (sub.getRetryCount() < 3) {
-                    log.warn("Submission {} timed out. Retrying... (Attempt {})", sub.getId(), sub.getRetryCount() + 1);
-                    restartSubmission(sub);
-                    continue;
-                } else {
-                    sub.setStatus(Submission.Status.INTERNAL_ERROR);
-                    sub.setResultDetails("Max retries reached. Judge0 is not responding.");
-                    submissionRepository.save(sub);
-                    continue;
-                }
-            }
-
-
+        List<Submission> pending = submissionRepository.findAllByStatus(Submission.Status.IN_QUEUE);
+        for (Submission sub : pending) {
             var response = judge0Client.getSubmissionStatus(sub.getJudge0Token());
-            if (response != null && response.getStatus() != null) {
-                if (response.getStatus().getId() > 2) {
-                    updateSubmissionStatus(sub, response);
-                }
+            if (response != null && response.getStatus() != null && response.getStatus().getId() > 2) {
+                updateSubmissionStatus(sub, response);
             }
         }
-
-    }
-
-    private void restartSubmission(Submission sub) {
-
-        Problem problem = problemRepository.findById(sub.getProblemId()).orElseThrow();
-        var tests = polygonProblemService.getTests(problem.getPolygonToken());
-        var mainTest = tests.get(0);
-
-
-        String newToken = judge0Client.submitAsync(sub.getSourceCode(), sub.getLanguageId(), mainTest.getInput(), mainTest.getOutput());
-
-        sub.setJudge0Token(newToken);
-        sub.setRetryCount(sub.getRetryCount() + 1);
-        sub.setUpdatedAt(LocalDateTime.now());
-        submissionRepository.save(sub);
     }
 
     private void updateSubmissionStatus(Submission sub, Judge0Client.SubmissionResponse response) {

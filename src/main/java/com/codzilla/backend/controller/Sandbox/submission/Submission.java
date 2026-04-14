@@ -37,8 +37,6 @@ public class Submission {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
-
-    private int retryCount = 0;
     private LocalDateTime updatedAt = LocalDateTime.now();
 
 

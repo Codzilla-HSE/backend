@@ -23,8 +23,6 @@ public class ProblemService {
 
     public Problem createProblem(CreateProblemRequest request) {
 
-
-
         Problem problem = new Problem();
 
         problem.setPolygonToken(request.getName());
@@ -36,7 +34,7 @@ public class ProblemService {
 
     public String submitSolution(Long userId, Long problemId, String sourceCode, int languageId) {
         Problem problem = problemRepository.findById(problemId)
-                .orElseThrow(() -> new RuntimeException("Problem not found"));
+                .orElseThrow(() -> new RuntimeException("Problem not found: " + problemId));
 
 
         List<PolygonProblem.Test> tests = polygonProblemService.getTests(problem.getPolygonToken());
