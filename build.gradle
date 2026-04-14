@@ -13,11 +13,11 @@ jar {
     enabled = false
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(23)
-    }
-}
+//java {
+//    toolchain {
+//        languageVersion = JavaLanguageVersion.of(23)
+//    }
+//}
 
 repositories {
     mavenCentral()
