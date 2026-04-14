@@ -29,7 +29,18 @@ jobs:
       - name: Run tests
         run: ./gradlew test
         env:
-          SPRING_PROFILES_ACTIVE: dev
+          POLYGON_KEY: e74e00bbcd8a98522b9e44c87f7508f5b9d1ad75
+          POLYGON_SECRET: 3de0ad5bd9459d7e69633148859acd7c0ba2f1f0
+          POLYGON_API_URL: https://polygon.codeforces.com/api/
+          JUDGE0_BASE_URL: http://localhost:2358
+          DB_URL: jdbc:postgresql://localhost:5433/testingdb
+          DB_USERNAME: myuser
+          DB_PASSWORD: secret
+          S3_ACCESS_KEY: minio-user
+          S3_PASSWORD: minio-password
+          S3_REGION: us-east-1
+          S3_BUCKET_NAME: codzilla
+
 
       - name: Build jar
         run: ./gradlew bootJar
