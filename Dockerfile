@@ -1,5 +1,5 @@
 
- FROM gradle:8-jdk23 AS builder
+ FROM gradle:8-jdk21-alpine AS builder
  WORKDIR /app
  COPY . .
  RUN gradle build -x test
