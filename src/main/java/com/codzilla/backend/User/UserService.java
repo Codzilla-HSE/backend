@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Slf4j
@@ -24,6 +25,14 @@ public class UserService {
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+    }
+
+    public UUID getIdByEmail(String email) {
+        try {
+            return userRepository.findIdByEmail(email).get();
+        } catch (NoSuchElementException e) {
+            throw new UserNotFoundException();
+        }
     }
 
     public void registerUser(RegisterRequestDTO dto) throws UserAlreadyExistsException {

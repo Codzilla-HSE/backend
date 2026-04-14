@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -32,14 +34,20 @@ public class ProblemService {
         return problemRepository.save(problem);
     }
 
-    public String submitSolution(Long userId, Long problemId, String sourceCode, int languageId) {
+    public String submitSolution(UUID userId, Long problemId, String sourceCode, int languageId) {
         Problem problem = problemRepository.findById(problemId)
-                .orElseThrow(() -> new RuntimeException("Problem not found: " + problemId));
+                                           .orElseThrow(() -> new RuntimeException(
+                                                   "Problem not found: " + problemId));
 
 
         List<PolygonProblem.Test> tests = polygonProblemService.getTests(problem.getPolygonToken());
         PolygonProblem.Test mainTest = tests.get(0);
-        String token = judge0Client.submitAsync(sourceCode, languageId, mainTest.getInput(), mainTest.getOutput());
+        String token = judge0Client.submitAsync(
+                sourceCode,
+                languageId,
+                mainTest.getInput(),
+                mainTest.getOutput()
+        );
 
 
         Submission sub = new Submission();
@@ -48,6 +56,7 @@ public class ProblemService {
         sub.setLanguageId(languageId);
         sub.setJudge0Token(token);
         sub.setStatus(Submission.Status.IN_QUEUE);
+        sub.setUserId(userId);
         submissionRepository.save(sub);
 
         return "Submitted! Your token: " + token;
