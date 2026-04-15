@@ -48,14 +48,15 @@ public class PolygonClient {
 
 
     public PolygonProblem getProblemTests(String problemId) {
+        log.info("Polygon api URL:{}", baseUrl);
         var params = new TreeMap<String, String>();
         params.put("problemId", problemId);
         params.put("testset", "tests");
 
-        String url = buildSignedUrl("problem.tests", params);
-
+        String fullUrl = baseUrl + buildSignedUrl("problem.tests", params);
+        log.info("Signed URL:{}", fullUrl);
         String raw = restClient.get()
-                .uri(url)
+                .uri(fullUrl)
                 .retrieve()
                 .onStatus(status -> true, (req, res) -> {})
                 .body(String.class);

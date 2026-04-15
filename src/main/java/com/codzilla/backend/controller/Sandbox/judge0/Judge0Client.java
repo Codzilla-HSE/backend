@@ -40,6 +40,7 @@ public class Judge0Client {
 
 
             TokenResponse tokenResponse = objectMapper.readValue(raw, TokenResponse.class);
+            log.info("Submission get token: {}", tokenResponse.getToken());
             return tokenResponse.getToken();
 
         } catch (Exception e) {
@@ -54,7 +55,7 @@ public class Judge0Client {
                     .uri("/submissions/" + token + "?base64_encoded=false")
                     .retrieve()
                     .body(String.class);
-
+            log.info("Raw data from judge: {}", raw);
             return objectMapper.readValue(raw, SubmissionResponse.class);
         } catch (Exception e) {
             log.error("Failed to fetch status for token: " + token, e);

@@ -59,6 +59,6 @@ public class ProblemService {
         sub.setUserId(userId);
         submissionRepository.save(sub);
 
-        return "Submitted! Your token: " + token;
+        return token;
     }
 }
