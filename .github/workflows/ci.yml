@@ -29,6 +29,7 @@ jobs:
       - name: Run tests
         run: ./gradlew test
         env:
+          S3_ENDPOINT: http://localhost:9000
           POLYGON_KEY: e74e00bbcd8a98522b9e44c87f7508f5b9d1ad75
           POLYGON_SECRET: 3de0ad5bd9459d7e69633148859acd7c0ba2f1f0
           POLYGON_API_URL: https://polygon.codeforces.com/api/
