@@ -38,7 +38,8 @@ public class ProblemController {
             @AuthenticationPrincipal User user,
             @RequestParam Long problemId,
             @RequestParam int languageId,
-            @RequestParam MultipartFile file) throws IOException {
+            @RequestParam MultipartFile file
+    ) throws IOException {
         String sourceCode = new String(
                 file.getBytes(),
                 StandardCharsets.UTF_8
@@ -53,22 +54,4 @@ public class ProblemController {
         );
         return ResponseEntity.ok(result);
     }
-
-
-//    @PostMapping("submit")
-//    public ResponseEntity<String> submit(
-//            @AuthenticationPrincipal User user,
-//
-//            @RequestParam int languageId,
-//            @RequestBody String sourceCode
-//            ) {
-//        UUID userId = userService.getIdByEmail(user.getEmail());
-//        String result = problemService.submitSolution(
-//                userId,
-//                id,
-//                sourceCode,
-//                languageId
-//        );
-//        return ResponseEntity.ok(result);
-//    }
 }

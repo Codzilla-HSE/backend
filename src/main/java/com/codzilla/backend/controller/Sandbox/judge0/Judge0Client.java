@@ -17,34 +17,48 @@ public class Judge0Client {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public Judge0Client(@Value("${judge0.base-url}") String baseUrl) {
+
         this.restClient = RestClient.builder()
-                .baseUrl(baseUrl)
-                .build();
+                                    .baseUrl(baseUrl)
+                                    .build();
     }
 
 
-
-    public String submitAsync(String sourceCode, int languageId, String stdin, String expectedOutput) {
+    public String submitAsync(String sourceCode, int languageId, String stdin,
+                              String expectedOutput) {
         try {
             String body = objectMapper.writeValueAsString(
-                    new SubmissionRequest(sourceCode, languageId, stdin, expectedOutput)
+                    new SubmissionRequest(
+                            sourceCode,
+                            languageId,
+                            stdin,
+                            expectedOutput
+                    )
             );
 
 
             String raw = restClient.post()
-                    .uri("/submissions?base64_encoded=false")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(body)
-                    .retrieve()
-                    .body(String.class);
+                                   .uri("/submissions?base64_encoded=false&fields=stdout")
+                                   .contentType(MediaType.APPLICATION_JSON)
+                                   .body(body)
+                                   .retrieve()
+                                   .body(String.class);
 
-
-            TokenResponse tokenResponse = objectMapper.readValue(raw, TokenResponse.class);
-            log.info("Submission get token: {}", tokenResponse.getToken());
+            TokenResponse tokenResponse = objectMapper.readValue(
+                    raw,
+                    TokenResponse.class
+            );
+            log.info(
+                    "Submission get token: {}",
+                    tokenResponse.getToken()
+            );
             return tokenResponse.getToken();
 
         } catch (Exception e) {
-            log.error("Judge0 submission failed", e);
+            log.error(
+                    "Judge0 submission failed",
+                    e
+            );
             return null;
         }
     }
@@ -52,13 +66,22 @@ public class Judge0Client {
     public SubmissionResponse getSubmissionStatus(String token) {
         try {
             String raw = restClient.get()
-                    .uri("/submissions/" + token + "?base64_encoded=false")
-                    .retrieve()
-                    .body(String.class);
-            log.info("Raw data from judge: {}", raw);
-            return objectMapper.readValue(raw, SubmissionResponse.class);
+                                   .uri("/submissions/" + token + "?base64_encoded=false")
+                                   .retrieve()
+                                   .body(String.class);
+            log.info(
+                    "Raw data from judge: {}",
+                    raw
+            );
+            return objectMapper.readValue(
+                    raw,
+                    SubmissionResponse.class
+            );
         } catch (Exception e) {
-            log.error("Failed to fetch status for token: " + token, e);
+            log.error(
+                    "Failed to fetch status for token: " + token,
+                    e
+            );
             return null;
         }
     }
@@ -77,7 +100,8 @@ public class Judge0Client {
         public String stdin;
         String expectedOutput;
 
-        public SubmissionRequest(String sourceCode, int languageId, String stdin, String expectedOutput) {
+        public SubmissionRequest(String sourceCode, int languageId, String stdin,
+                                 String expectedOutput) {
             this.source_code = sourceCode;
             this.language_id = languageId;
             this.stdin = stdin;

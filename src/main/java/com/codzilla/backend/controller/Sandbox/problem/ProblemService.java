@@ -22,6 +22,7 @@ public class ProblemService {
     private final Judge0Client judge0Client;
     private final PolygonProblemService polygonProblemService;
     private final SubmissionRepository submissionRepository;
+    private final PolygonClient polygonClient;
 
     public Problem createProblem(CreateProblemRequest request) {
 
@@ -45,6 +46,12 @@ public class ProblemService {
         String token = judge0Client.submitAsync(
                 sourceCode,
                 languageId,
+                mainTest.getInput(),
+                mainTest.getOutput() // null output somehow
+        );
+        log.info("Get tests of problem: {}", tests.toString());
+        log.info(
+                "Submit submission with input: {} and expected output: {}",
                 mainTest.getInput(),
                 mainTest.getOutput()
         );

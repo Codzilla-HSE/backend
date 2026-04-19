@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<Submission> findAllByStatus(Submission.Status status);
+//    Submission findById(Long id);
 }
