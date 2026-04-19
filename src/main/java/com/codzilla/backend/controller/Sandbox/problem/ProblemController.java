@@ -64,4 +64,14 @@ public class ProblemController {
                         (sub.getResultDetails() != null ? ": " + sub.getResultDetails() : "")))
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @PostMapping("/{id}/submit")
+    public ResponseEntity<String> submit(
+            @PathVariable Long id,
+            @RequestParam int languageId,
+            @RequestBody String sourceCode) {
+        String result = problemService.submitSolution(UUID.randomUUID(), id, sourceCode, languageId);
+        return ResponseEntity.ok(result);
+    }
+
 }

@@ -3,10 +3,9 @@ package com.codzilla.backend.Sandbox.controller;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserService;
 import com.codzilla.backend.controller.Sandbox.problem.*;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -17,9 +16,9 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 
 @WebMvcTest(
         controllers = ProblemController.class,
@@ -29,8 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration.class
         }
 )
-@AutoConfigureMockMvc(addFilters = false)
-class ProblemControllerTest {
+class ProblemControllerFileTest {
 
     @MockitoBean
     private com.codzilla.backend.Authentication.JWTRequestFilter.JWTRequestFilter jwtRequestFilter;
@@ -50,46 +48,38 @@ class ProblemControllerTest {
     @MockitoBean
     private com.codzilla.backend.controller.Sandbox.submission.SubmissionRepository submissionRepository;
 
+    private User mockUser;
 
-    @Test
-    void createProblem_shouldReturnSavedProblem() throws Exception {
-
-        Problem problem = new Problem();
-        problem.setId(1L);
-        problem.setPolygonToken("517936");
-        problem.setType(Problem.ProblemType.ALGORITHM);
-        problem.setLevel(Problem.ProblemLevel.EASY);
-
-        when(problemService.createProblem(any())).thenReturn(problem);
-
-        String json = """
-        {
-          "name": "test-problem",
-          "type": "ALGORITHM",
-          "level": "EASY"
-        }
-        """;
-
-        mockMvc.perform(post("/problems/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.polygonToken").value("517936"));
+    @BeforeEach
+    void setUp() {
+        mockUser = User.builder()
+                .email("test@mail.com")
+                .password("password")
+                .nickname("tester")
+                .build();
     }
 
 
     @Test
-    void submit_shouldReturnResult() throws Exception {
+    void submitFile_shouldWork() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "solution.py",
+                MediaType.TEXT_PLAIN_VALUE,
+                "print(3)".getBytes()
+        );
+
+        when(userService.getIdByEmail("test@mail.com"))
+                .thenReturn(UUID.randomUUID());
 
         when(problemService.submitSolution(any(UUID.class), anyLong(), anyString(), anyInt()))
-                .thenReturn("Submitted! token-123");
+                .thenReturn("Submitted!");
 
-        mockMvc.perform(post("/problems/1/submit")
+        mockMvc.perform(multipart("/problems/submit/file")
+                        .file(file)
+                        .param("problemId", "1")
                         .param("languageId", "71")
-                        .content("print(3)")
-                        .contentType(MediaType.TEXT_PLAIN))
-                .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("token-123")));
+                        .with(user(mockUser)))
+                .andExpect(status().isOk());
     }
-
 }

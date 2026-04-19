@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -98,7 +99,7 @@ public class SandboxTest {
                 .thenReturn("judge0-token-123");
         when(submissionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        String result = problemService.submitSolution(1L, 1L, "print(3)", 71);
+        String result = problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71);
 
         assertThat(result).contains("judge0-token-123");
     }
@@ -116,7 +117,7 @@ public class SandboxTest {
                 .thenReturn("token");
         when(submissionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        problemService.submitSolution(1L, 1L, "print(3)", 71);
+        problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71);
 
         verify(judge0Client, times(2)).submitAsync(anyString(), anyInt(), anyString(), anyString());
     }
@@ -125,7 +126,7 @@ public class SandboxTest {
     void submitSolution_shouldThrowWhenProblemNotFound() {
         when(problemRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> problemService.submitSolution(1L, 99L, "code", 71))
+        assertThatThrownBy(() -> problemService.submitSolution(UUID.randomUUID(), 99L, "code", 71))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Problem not found");
     }
@@ -157,7 +158,7 @@ public class SandboxTest {
             return saved[0];
         });
 
-        problemService.submitSolution(1L, 1L, "print(3)", 71);
+        problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71);
 
         assertThat(saved[0]).isNotNull();
         assertThat(saved[0].getStatus()).isEqualTo(Submission.Status.IN_QUEUE);
@@ -172,7 +173,7 @@ public class SandboxTest {
         when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), anyString()))
                 .thenReturn(null);
 
-        assertThatThrownBy(() -> problemService.submitSolution(1L, 1L, "print(3)", 71))
+        assertThatThrownBy(() -> problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Judge0 unavailable");
     }
