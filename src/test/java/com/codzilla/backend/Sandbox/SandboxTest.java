@@ -56,7 +56,7 @@ public class SandboxTest {
         test.setOutput("3");
     }
 
-    // ✅ ДОЛЖЕН ПРОХОДИТЬ — задача сохраняется в БД
+
     @Test
     void createProblem_shouldSaveProblem() {
         CreateProblemRequest request = new CreateProblemRequest();
@@ -75,8 +75,6 @@ public class SandboxTest {
         verify(problemRepository, times(1)).save(any());
     }
 
-    // ❌ ПАДАЕТ — createProblem не вызывает polygonClient.createProblem()
-    // Polygon не знает о задаче, polygonToken содержит просто name а не реальный ID
     @Test
     void createProblem_shouldCallPolygonAPI() {
         when(polygonClient.createProblem(anyString())).thenReturn("517936");
@@ -92,7 +90,6 @@ public class SandboxTest {
         verify(polygonClient, times(1)).createProblem("test-problem-1");
     }
 
-    // ✅ ДОЛЖЕН ПРОХОДИТЬ — сабмит возвращает токен
     @Test
     void submitSolution_shouldReturnToken() {
         when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
@@ -106,7 +103,6 @@ public class SandboxTest {
         assertThat(result).contains("judge0-token-123");
     }
 
-    // ❌ ПАДАЕТ — submitSolution берёт только tests.get(0), игнорирует остальные тесты
     @Test
     void submitSolution_shouldRunAllTests() {
         PolygonProblem.Test test2 = new PolygonProblem.Test();
@@ -122,11 +118,9 @@ public class SandboxTest {
 
         problemService.submitSolution(1L, 1L, "print(3)", 71);
 
-        // Падает — judge0Client вызывается только 1 раз вместо 2
         verify(judge0Client, times(2)).submitAsync(anyString(), anyInt(), anyString(), anyString());
     }
 
-    // ❌ ПАДАЕТ — problem not found должен бросать исключение
     @Test
     void submitSolution_shouldThrowWhenProblemNotFound() {
         when(problemRepository.findById(99L)).thenReturn(Optional.empty());
@@ -136,8 +130,6 @@ public class SandboxTest {
                 .hasMessageContaining("Problem not found");
     }
 
-    // ❌ ПАДАЕТ — expectedOutput не сериализуется правильно в Judge0
-    // поле называется expectedOutput но Judge0 ожидает expected_output
     @Test
     void judge0Client_expectedOutputFieldNameShouldBeCorrect() throws Exception {
         com.fasterxml.jackson.databind.ObjectMapper mapper =
@@ -148,12 +140,10 @@ public class SandboxTest {
 
         String json = mapper.writeValueAsString(request);
 
-        // Падает — в JSON будет "expectedOutput" а не "expected_output"
         assertThat(json).contains("\"expected_output\"");
         assertThat(json).contains("\"3\"");
     }
 
-    // ✅ ДОЛЖЕН ПРОХОДИТЬ — submission сохраняется со статусом IN_QUEUE
     @Test
     void submitSolution_shouldSaveSubmissionWithInQueueStatus() {
         when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
@@ -175,16 +165,13 @@ public class SandboxTest {
         assertThat(saved[0].getProblemId()).isEqualTo(1L);
     }
 
-    // ❌ ПАДАЕТ — когда judge0Client возвращает null (не смог отправить)
-    // сабмит всё равно сохраняется с null токеном — это баг
     @Test
     void submitSolution_shouldHandleJudge0Failure() {
         when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
         when(polygonProblemService.getTests("test-problem-1")).thenReturn(List.of(test));
         when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), anyString()))
-                .thenReturn(null); // Judge0 недоступен
+                .thenReturn(null);
 
-        // Должен бросить исключение, но не бросает — сохраняет null токен
         assertThatThrownBy(() -> problemService.submitSolution(1L, 1L, "print(3)", 71))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Judge0 unavailable");

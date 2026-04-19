@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration.class
         }
 )
-@AutoConfigureMockMvc(addFilters = false) // ← ВАЖНО
+@AutoConfigureMockMvc(addFilters = false)
 
 class ProblemControllerTest {
 

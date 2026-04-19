@@ -70,38 +70,30 @@ class ProblemIntegrationTest {
 
     @Test
     void fullFlow_createAndSubmit() throws Exception {
-        // подготовить problem который вернёт репозиторий
         Problem problem = new Problem();
         problem.setId(1L);
         problem.setPolygonToken("517936");
         problem.setType(Problem.ProblemType.ALGORITHM);
         problem.setLevel(Problem.ProblemLevel.EASY);
 
-        // мок polygon
+
         when(polygonClient.createProblem(anyString())).thenReturn("517936");
 
-        // мок репозитория — save возвращает problem с id=1
+
         when(problemRepository.save(any())).thenReturn(problem);
 
-        // мок для submit — findById возвращает problem
+
         when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
 
-        // мок тестов из Polygon
+
         PolygonProblem.Test test = new PolygonProblem.Test();
         test.setIndex(1);
         test.setInput("1 2");
         test.setOutput("3");
 
-        // нужен мок PolygonProblemService тоже
-        // добавь его в класс:
-        // @MockitoBean
-        // private PolygonProblemService polygonProblemService;
         when(polygonProblemService.getTests("517936")).thenReturn(List.of(test));
-
-        // мок judge0
         when(judge0Client.submitAsync(any(), anyInt(), any(), any())).thenReturn("token-123");
 
-        // 1. CREATE
         mockMvc.perform(post("/problems/create")
                         .contentType("application/json")
                         .content("""
@@ -114,7 +106,6 @@ class ProblemIntegrationTest {
                     """))
                 .andExpect(status().isOk());
 
-        // 2. SUBMIT
         mockMvc.perform(post("/problems/1/submit")
                         .param("languageId", "71")
                         .content("print(3)")
