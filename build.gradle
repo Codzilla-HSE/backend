@@ -19,6 +19,11 @@ java {
     }
 }
 
+test {
+    maxHeapSize = "512m"
+    forkEvery = 1
+}
+
 repositories {
     mavenCentral()
 }

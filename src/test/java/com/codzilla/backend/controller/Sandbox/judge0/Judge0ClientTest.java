@@ -1,13 +1,12 @@
 package com.codzilla.backend.controller.Sandbox.judge0;
 
-import org.junit.jupiter.api.AutoClose;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 @SpringBootTest
+@Disabled("Requires running Judge0 instance")
 class Judge0ClientTest {
 
     @Autowired
@@ -15,7 +14,6 @@ class Judge0ClientTest {
 
     @Test
     void testSimpleOfJudge0() throws InterruptedException {
-        System.out.println("START HERE!");
         String token = client.submitAsync("print(1)", 71, "", "1");
         Thread.sleep(5000);
         System.out.println("STATUS: " + client.getSubmissionStatus(token).toString());
