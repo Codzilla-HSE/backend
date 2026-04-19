@@ -19,6 +19,7 @@ public class Submission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private int retryCount = 0;
 
     private Long problemId;
     private Long userId;

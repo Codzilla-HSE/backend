@@ -2,6 +2,7 @@ package com.codzilla.backend.controller.Sandbox.problem;
 
 import com.codzilla.backend.controller.Sandbox.polygon.CreateProblemRequest;
 
+import com.codzilla.backend.controller.Sandbox.submission.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class ProblemController {
 
     private final ProblemService problemService;
+    private final SubmissionRepository submissionRepository;
 
     @PostMapping("/create")
     public ResponseEntity<Problem> createProblem(@RequestBody CreateProblemRequest request) {
@@ -43,5 +45,14 @@ public class ProblemController {
             @RequestBody String sourceCode) {
         String result = problemService.submitSolution(1L, id, sourceCode, languageId);
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/submissions/{token}/status")
+    public ResponseEntity<String> getStatus(
+            @PathVariable String token) {
+        return submissionRepository.findByJudge0Token(token)
+                .map(sub -> ResponseEntity.ok(sub.getStatus().name() +
+                        (sub.getResultDetails() != null ? ": " + sub.getResultDetails() : "")))
+                .orElse(ResponseEntity.notFound().build());
     }
 }

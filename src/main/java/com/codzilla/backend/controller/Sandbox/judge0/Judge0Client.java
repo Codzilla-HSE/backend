@@ -74,14 +74,13 @@ public class Judge0Client {
         public String source_code;
         public Integer language_id;
         public String stdin;
-        String expectedOutput;
+        public String expected_output;
 
         public SubmissionRequest(String sourceCode, int languageId, String stdin, String expectedOutput) {
             this.source_code = sourceCode;
             this.language_id = languageId;
             this.stdin = stdin;
-            this.expectedOutput = expectedOutput;
-
+            this.expected_output = expectedOutput;
         }
 
     }
