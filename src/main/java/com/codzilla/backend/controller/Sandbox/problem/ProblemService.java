@@ -26,11 +26,19 @@ public class ProblemService {
 
     public Problem createProblem(CreateProblemRequest request) {
 
-        Problem problem = new Problem();
+        String polygonId = polygonClient.createProblem(request.getName());
 
-        problem.setPolygonToken(request.getName());
+        Problem problem = new Problem();
+        problem.setPolygonToken(polygonId);
         problem.setType(request.getType());
         problem.setLevel(request.getLevel());
+
+        if (request.getTests() != null) {
+            for (int i = 0; i < request.getTests().size(); i++) {
+                var t = request.getTests().get(i);
+                polygonClient.saveTest(polygonId, i + 1, t.getInput(), t.getOutput());
+            }
+        }
 
         return problemRepository.save(problem);
     }
@@ -39,33 +47,39 @@ public class ProblemService {
         Problem problem = problemRepository.findById(problemId)
                                            .orElseThrow(() -> new RuntimeException(
                                                    "Problem not found: " + problemId));
-
-
         List<PolygonProblem.Test> tests = polygonProblemService.getTests(problem.getPolygonToken());
-        PolygonProblem.Test mainTest = tests.get(0);
-        String token = judge0Client.submitAsync(
-                sourceCode,
-                languageId,
-                mainTest.getInput(),
-                mainTest.getOutput() // null output somehow
-        );
-        log.info("Get tests of problem: {}", tests.toString());
-        log.info(
-                "Submit submission with input: {} and expected output: {}",
-                mainTest.getInput(),
-                mainTest.getOutput()
-        );
 
+        if (tests == null || tests.isEmpty()) {
+            throw new RuntimeException("No tests found for problem " + problemId);
+        }
+
+        String lastToken = null;
+
+        for (PolygonProblem.Test test : tests) {
+            String token = judge0Client.submitAsync(
+                    sourceCode,
+                    languageId,
+                    test.getInput(),
+                    test.getOutput()
+            );
+
+            if (token == null) {
+                throw new RuntimeException("Judge0 unavailable");
+            }
+
+            lastToken = token;
+        }
 
         Submission sub = new Submission();
         sub.setProblemId(problemId);
+        sub.setUserId(userId);
         sub.setSourceCode(sourceCode);
         sub.setLanguageId(languageId);
-        sub.setJudge0Token(token);
+        sub.setJudge0Token(lastToken);
         sub.setStatus(Submission.Status.IN_QUEUE);
-        sub.setUserId(userId);
+
         submissionRepository.save(sub);
 
-        return token;
+        return lastToken;
     }
 }
