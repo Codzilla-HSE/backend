@@ -55,7 +55,7 @@ public class PolygonClient {
         params.put("problemId", problemId);
         params.put("testset", "tests");
 
-        String fullUrl = baseUrl + buildSignedUrl("problem.tests", params);
+        String fullUrl = buildSignedUrl("problem.tests", params);
         String raw = restClient.get()
                 .uri(fullUrl)
                 .retrieve()

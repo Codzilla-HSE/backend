@@ -11,4 +11,5 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     Optional<Submission> findByJudge0Token(String token);
     List<Submission> findAllByStatus(Submission.Status status);
 //    Submission findById(Long id);
+
 }

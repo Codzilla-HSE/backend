@@ -29,7 +29,7 @@ public class Submission {
     @JdbcTypeCode(SqlTypes.UUID)
     private UUID userId;
 
-    @Column(columnDefinition = "TEXT")
+    @Transient
     private String sourceCode;
 
     private Integer languageId;

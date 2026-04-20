@@ -1,5 +1,6 @@
 package com.codzilla.backend.controller.Sandbox.problem;
 
+import com.codzilla.backend.S3.S3Repository;
 import com.codzilla.backend.controller.Sandbox.judge0.Judge0Client;
 import com.codzilla.backend.controller.Sandbox.polygon.*;
 
@@ -23,6 +24,7 @@ public class ProblemService {
     private final PolygonProblemService polygonProblemService;
     private final SubmissionRepository submissionRepository;
     private final PolygonClient polygonClient;
+    private final S3Repository s3Repository;
 
     public Problem createProblem(CreateProblemRequest request) {
 
@@ -48,7 +50,7 @@ public class ProblemService {
                                            .orElseThrow(() -> new RuntimeException(
                                                    "Problem not found: " + problemId));
         List<PolygonProblem.Test> tests = polygonProblemService.getTests(problem.getPolygonToken());
-
+        log.info("Tests of problem: {}", tests);
         if (tests == null || tests.isEmpty()) {
             throw new RuntimeException("No tests found for problem " + problemId);
         }
@@ -77,8 +79,9 @@ public class ProblemService {
         sub.setLanguageId(languageId);
         sub.setJudge0Token(lastToken);
         sub.setStatus(Submission.Status.IN_QUEUE);
-
         submissionRepository.save(sub);
+
+        s3Repository.save(sourceCode.getBytes(), "submissions/" + sub.getId());
 
         return lastToken;
     }
