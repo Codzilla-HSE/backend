@@ -6,6 +6,11 @@ import com.codzilla.backend.controller.Sandbox.problem.Problem;
 import com.codzilla.backend.controller.Sandbox.problem.ProblemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import com.codzilla.backend.controller.Sandbox.submission.SubmissionUpdatedEvent; 
+
+import org.springframework.context.ApplicationEventPublisher; 
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +26,8 @@ public class SubmissionPollingService {
     private final Judge0Client judge0Client;
     final private PolygonProblemService polygonProblemService;
     final private ProblemRepository problemRepository;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Scheduled(fixedDelay = 2000)
     public void pollStatuses() {
@@ -51,7 +58,6 @@ public class SubmissionPollingService {
 
         log.info("Submission {} finished with verdict: {}", sub.getId(), description);
 
-
-
+        eventPublisher.publishEvent(new SubmissionUpdatedEvent(sub.getUserId()));
     }
 }
