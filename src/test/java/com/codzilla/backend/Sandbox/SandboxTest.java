@@ -21,6 +21,11 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class SandboxTest {
+    @Mock
+    private ProblemTestRepository problemTestRepository;
+
+    @Mock
+    private SubmissionTestRepository submissionTestRepository;
 
     @Mock
     private ProblemRepository problemRepository;
@@ -92,37 +97,6 @@ public class SandboxTest {
     }
 
     @Test
-    void submitSolution_shouldReturnToken() {
-        when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
-        when(polygonProblemService.getTests("test-problem-1")).thenReturn(List.of(test));
-        when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), anyString()))
-                .thenReturn("judge0-token-123");
-        when(submissionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        String result = problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71);
-
-        assertThat(result).contains("judge0-token-123");
-    }
-
-    @Test
-    void submitSolution_shouldRunAllTests() {
-        PolygonProblem.Test test2 = new PolygonProblem.Test();
-        test2.setIndex(2);
-        test2.setInput("5 10");
-        test2.setOutput("15");
-
-        when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
-        when(polygonProblemService.getTests("test-problem-1")).thenReturn(List.of(test, test2));
-        when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), anyString()))
-                .thenReturn("token");
-        when(submissionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71);
-
-        verify(judge0Client, times(2)).submitAsync(anyString(), anyInt(), anyString(), anyString());
-    }
-
-    @Test
     void submitSolution_shouldThrowWhenProblemNotFound() {
         when(problemRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -144,38 +118,98 @@ public class SandboxTest {
         assertThat(json).contains("\"expected_output\"");
         assertThat(json).contains("\"3\"");
     }
+    @Test
+    void submitSolution_shouldReturnToken() {
+        Submission savedSub = new Submission();
+        savedSub.setId(42L);
+        savedSub.setStatus(Submission.Status.IN_QUEUE);
+
+        when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
+        when(problemTestRepository.findAllByProblemIdOrderByTestIndex(1L))
+                .thenReturn(List.of(toProblemTest(test, 1L)));
+        when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), isNull()))
+                .thenReturn("judge0-token-123");
+        when(submissionRepository.save(any())).thenReturn(savedSub);
+        when(submissionTestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        String result = problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71);
+
+        assertThat(result).isEqualTo("42");
+    }
+
+    @Test
+    void submitSolution_shouldRunAllTests() {
+        Submission savedSub = new Submission();
+        savedSub.setId(42L);
+
+        ProblemTest pt1 = toProblemTest(test, 1L);
+        ProblemTest pt2 = new ProblemTest();
+        pt2.setProblemId(1L);
+        pt2.setTestIndex(2);
+        pt2.setInput("5 10");
+        pt2.setExpectedOutput("15");
+
+        when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
+        when(problemTestRepository.findAllByProblemIdOrderByTestIndex(1L))
+                .thenReturn(List.of(pt1, pt2));
+        when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), isNull()))
+                .thenReturn("token");
+        when(submissionRepository.save(any())).thenReturn(savedSub);
+        when(submissionTestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71);
+
+        verify(judge0Client, times(2)).submitAsync(anyString(), anyInt(), anyString(), isNull());
+    }
 
     @Test
     void submitSolution_shouldSaveSubmissionWithInQueueStatus() {
-        when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
-        when(polygonProblemService.getTests("test-problem-1")).thenReturn(List.of(test));
-        when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), anyString()))
-                .thenReturn("token-123");
-
         Submission[] saved = new Submission[1];
+        Submission savedSub = new Submission();
+        savedSub.setId(42L);
+
+        when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
+        when(problemTestRepository.findAllByProblemIdOrderByTestIndex(1L))
+                .thenReturn(List.of(toProblemTest(test, 1L)));
+        when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), isNull()))
+                .thenReturn("token-123");
         when(submissionRepository.save(any())).thenAnswer(inv -> {
             saved[0] = inv.getArgument(0);
+            saved[0].setId(42L);
             return saved[0];
         });
+        when(submissionTestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71);
 
         assertThat(saved[0]).isNotNull();
         assertThat(saved[0].getStatus()).isEqualTo(Submission.Status.IN_QUEUE);
-        assertThat(saved[0].getJudge0Token()).isEqualTo("token-123");
         assertThat(saved[0].getProblemId()).isEqualTo(1L);
     }
 
     @Test
     void submitSolution_shouldHandleJudge0Failure() {
+        Submission savedSub = new Submission();
+        savedSub.setId(42L);
+
         when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
-        when(polygonProblemService.getTests("test-problem-1")).thenReturn(List.of(test));
-        when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), anyString()))
+        when(problemTestRepository.findAllByProblemIdOrderByTestIndex(1L))
+                .thenReturn(List.of(toProblemTest(test, 1L)));
+        when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), isNull()))
                 .thenReturn(null);
+        when(submissionRepository.save(any())).thenReturn(savedSub);
 
         assertThatThrownBy(() -> problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Judge0 unavailable");
     }
-    
+
+    private ProblemTest toProblemTest(PolygonProblem.Test t, Long problemId) {
+        ProblemTest pt = new ProblemTest();
+        pt.setProblemId(problemId);
+        pt.setTestIndex(t.getIndex());
+        pt.setInput(t.getInput());
+        pt.setExpectedOutput(t.getOutput());
+        return pt;
+    }
 }
