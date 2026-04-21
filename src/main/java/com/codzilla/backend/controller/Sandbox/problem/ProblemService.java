@@ -1,5 +1,6 @@
 package com.codzilla.backend.controller.Sandbox.problem;
 
+import com.codzilla.backend.S3.S3Repository;
 import com.codzilla.backend.controller.Sandbox.judge0.Judge0Client;
 import com.codzilla.backend.controller.Sandbox.polygon.*;
 
@@ -25,6 +26,7 @@ public class ProblemService {
     private final PolygonProblemService polygonProblemService;
     private final SubmissionRepository submissionRepository;
     private final PolygonClient polygonClient;
+    private final S3Repository s3Repository;
     private final SubmissionTestRepository submissionTestRepository;
     private final ProblemTestRepository problemTestRepository;
 
@@ -71,11 +73,11 @@ public class ProblemService {
         Submission sub = new Submission();
         sub.setProblemId(problemId);
         sub.setUserId(userId);
-        sub.setSourceCode(sourceCode);
+
         sub.setLanguageId(languageId);
         sub.setStatus(Submission.Status.IN_QUEUE);
         Submission saved = submissionRepository.save(sub);
-
+        s3Repository.save(sourceCode.getBytes(), "submissions/" + saved.getId());
         for (int i = 0; i < tests.size(); i++) {
             ProblemTest test = tests.get(i);
 
