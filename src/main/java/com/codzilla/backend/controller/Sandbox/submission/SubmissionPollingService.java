@@ -37,9 +37,9 @@ public class SubmissionPollingService {
 
     @Scheduled(fixedDelay = 2000)
     public void pollStatuses() {
-        List<Submission> pending = getPendingSubmissions(); // транзакция закрылась здесь
+        List<Submission> pending = getPendingSubmissions();
 
-        for (Submission sub : pending) { // Judge0 вызывается уже без открытой транзакции
+        for (Submission sub : pending) {
             var response = judge0Client.getSubmissionStatus(sub.getJudge0Token());
             if (response != null && response.getStatus() != null && response.getStatus().getId() > 2) {
                 updateSubmissionStatus(sub, response);
