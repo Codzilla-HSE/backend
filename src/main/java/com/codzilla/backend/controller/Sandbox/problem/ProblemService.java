@@ -73,11 +73,11 @@ public class ProblemService {
         Submission sub = new Submission();
         sub.setProblemId(problemId);
         sub.setUserId(userId);
-        sub.setSourceCode(sourceCode);
+
         sub.setLanguageId(languageId);
         sub.setStatus(Submission.Status.IN_QUEUE);
         Submission saved = submissionRepository.save(sub);
-
+        s3Repository.save(sourceCode.getBytes(), "submissions/" + saved.getId());
         for (int i = 0; i < tests.size(); i++) {
             ProblemTest test = tests.get(i);
 
