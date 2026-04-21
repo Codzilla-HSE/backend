@@ -5,6 +5,7 @@ import com.codzilla.backend.User.UserRepository;
 import com.codzilla.backend.User.UserService;
 import com.codzilla.backend.controller.Sandbox.polygon.CreateProblemRequest;
 
+import com.codzilla.backend.controller.Sandbox.polygon.PolygonClient;
 import com.codzilla.backend.controller.Sandbox.submission.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,12 +57,13 @@ public class ProblemController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/submissions/{token}/status")
-    public ResponseEntity<String> getStatus(
-            @PathVariable String token) {
-        return submissionRepository.findByJudge0Token(token)
-                .map(sub -> ResponseEntity.ok(sub.getStatus().name() +
-                        (sub.getResultDetails() != null ? ": " + sub.getResultDetails() : "")))
+    @GetMapping("/submissions/{id}/status")
+    public ResponseEntity<String> getStatus(@PathVariable Long id) {
+        return submissionRepository.findById(id)
+                .map(sub -> {
+                    String details = sub.getResultDetails() != null ? ": " + sub.getResultDetails() : "";
+                    return ResponseEntity.ok(sub.getStatus().name() + details);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 

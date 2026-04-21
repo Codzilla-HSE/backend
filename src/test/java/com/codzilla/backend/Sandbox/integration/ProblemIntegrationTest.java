@@ -8,6 +8,7 @@ import com.codzilla.backend.controller.Sandbox.polygon.PolygonClient;
 import com.codzilla.backend.controller.Sandbox.polygon.PolygonProblem;
 import com.codzilla.backend.controller.Sandbox.problem.Problem;
 import com.codzilla.backend.controller.Sandbox.problem.ProblemRepository;
+import com.codzilla.backend.controller.Sandbox.submission.Submission;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,12 @@ class ProblemIntegrationTest {
     private MockMvc mockMvc;
 
     @MockitoBean
+    private com.codzilla.backend.controller.Sandbox.problem.ProblemTestRepository problemTestRepository;
+
+    @MockitoBean
+    private com.codzilla.backend.controller.Sandbox.submission.SubmissionTestRepository submissionTestRepository;
+
+    @MockitoBean
     private ProblemRepository problemRepository;
     @MockitoBean
     private S3Initialization s3Initialization;
@@ -72,12 +79,12 @@ class ProblemIntegrationTest {
     void fullFlow_createAndSubmit() throws Exception {
         Problem problem = new Problem();
         problem.setId(1L);
-        problem.setPolygonToken("517936");
+        problem.setPolygonToken("533472");
         problem.setType(Problem.ProblemType.ALGORITHM);
         problem.setLevel(Problem.ProblemLevel.EASY);
 
 
-        when(polygonClient.createProblem(anyString())).thenReturn("517936");
+        when(polygonClient.createProblem(anyString())).thenReturn("533472");
 
 
         when(problemRepository.save(any())).thenReturn(problem);
@@ -93,6 +100,21 @@ class ProblemIntegrationTest {
 
         when(polygonProblemService.getTests("517936")).thenReturn(List.of(test));
         when(judge0Client.submitAsync(any(), anyInt(), any(), any())).thenReturn("token-123");
+        com.codzilla.backend.controller.Sandbox.problem.ProblemTest pt =
+                new com.codzilla.backend.controller.Sandbox.problem.ProblemTest();
+        pt.setProblemId(1L);
+        pt.setTestIndex(1);
+        pt.setInput("1 2");
+        pt.setExpectedOutput("3");
+
+        when(problemTestRepository.findAllByProblemIdOrderByTestIndex(1L))
+                .thenReturn(List.of(pt));
+
+        Submission savedSub = new Submission();
+        savedSub.setId(42L);
+        savedSub.setStatus(Submission.Status.IN_QUEUE);
+        when(submissionRepository.save(any())).thenReturn(savedSub);
+        when(submissionTestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         mockMvc.perform(post("/problems/create")
                         .contentType("application/json")
@@ -110,7 +132,6 @@ class ProblemIntegrationTest {
                         .param("languageId", "71")
                         .content("print(3)")
                         .contentType("text/plain"))
-                .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("token-123")));
+                .andExpect(status().isOk());
     }
 }

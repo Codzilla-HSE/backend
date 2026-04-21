@@ -6,6 +6,8 @@ import com.codzilla.backend.controller.Sandbox.polygon.*;
 
 import com.codzilla.backend.controller.Sandbox.submission.Submission;
 import com.codzilla.backend.controller.Sandbox.submission.SubmissionRepository;
+import com.codzilla.backend.controller.Sandbox.submission.SubmissionTest;
+import com.codzilla.backend.controller.Sandbox.submission.SubmissionTestRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,51 +27,47 @@ public class ProblemService {
     private final SubmissionRepository submissionRepository;
     private final PolygonClient polygonClient;
     private final S3Repository s3Repository;
+    private final SubmissionTestRepository submissionTestRepository;
+    private final ProblemTestRepository problemTestRepository;
 
     public Problem createProblem(CreateProblemRequest request) {
-
         String polygonId = polygonClient.createProblem(request.getName());
 
         Problem problem = new Problem();
         problem.setPolygonToken(polygonId);
         problem.setType(request.getType());
         problem.setLevel(request.getLevel());
+        Problem saved = problemRepository.save(problem);
 
         if (request.getTests() != null) {
             for (int i = 0; i < request.getTests().size(); i++) {
                 var t = request.getTests().get(i);
+
                 polygonClient.saveTest(polygonId, i + 1, t.getInput(), t.getOutput());
+
+
+                ProblemTest pt = new ProblemTest();
+                pt.setProblemId(saved.getId());
+                pt.setTestIndex(i + 1);
+                pt.setInput(t.getInput());
+                pt.setExpectedOutput(t.getOutput());
+                problemTestRepository.save(pt);
             }
         }
 
-        return problemRepository.save(problem);
+        return saved;
     }
 
     public String submitSolution(UUID userId, Long problemId, String sourceCode, int languageId) {
         Problem problem = problemRepository.findById(problemId)
-                                           .orElseThrow(() -> new RuntimeException(
-                                                   "Problem not found: " + problemId));
-        List<PolygonProblem.Test> tests = polygonProblemService.getTests(problem.getPolygonToken());
-        log.info("Tests of problem: {}", tests);
-        if (tests == null || tests.isEmpty()) {
+                .orElseThrow(() -> new RuntimeException("Problem not found: " + problemId));
+
+
+        List<ProblemTest> tests = problemTestRepository
+                .findAllByProblemIdOrderByTestIndex(problemId);
+
+        if (tests.isEmpty()) {
             throw new RuntimeException("No tests found for problem " + problemId);
-        }
-
-        String lastToken = null;
-
-        for (PolygonProblem.Test test : tests) {
-            String token = judge0Client.submitAsync(
-                    sourceCode,
-                    languageId,
-                    test.getInput(),
-                    test.getOutput()
-            );
-
-            if (token == null) {
-                throw new RuntimeException("Judge0 unavailable");
-            }
-
-            lastToken = token;
         }
 
         Submission sub = new Submission();
@@ -77,12 +75,29 @@ public class ProblemService {
         sub.setUserId(userId);
         sub.setSourceCode(sourceCode);
         sub.setLanguageId(languageId);
-        sub.setJudge0Token(lastToken);
         sub.setStatus(Submission.Status.IN_QUEUE);
-        submissionRepository.save(sub);
+        Submission saved = submissionRepository.save(sub);
 
-        s3Repository.save(sourceCode.getBytes(), "submissions/" + sub.getId());
+        for (int i = 0; i < tests.size(); i++) {
+            ProblemTest test = tests.get(i);
 
-        return lastToken;
+            String token = judge0Client.submitAsync(
+                    sourceCode, languageId, test.getInput(), null
+            );
+
+            if (token == null) {
+                throw new RuntimeException("Judge0 unavailable");
+            }
+
+            SubmissionTest subTest = new SubmissionTest();
+            subTest.setSubmissionId(saved.getId());
+            subTest.setTestIndex(i + 1);
+            subTest.setJudge0Token(token);
+            subTest.setExpectedOutput(test.getExpectedOutput().trim());
+            subTest.setStatus(SubmissionTest.Status.IN_QUEUE);
+            submissionTestRepository.save(subTest);
+        }
+
+        return saved.getId().toString();
     }
 }
