@@ -8,7 +8,8 @@ public record SubmissionResponseDTO(
         Integer languageId,
         String status,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        String resultDetails
 ) {
     public static SubmissionResponseDTO fromEntity(Submission submission) {
         return new SubmissionResponseDTO(
@@ -17,7 +18,8 @@ public record SubmissionResponseDTO(
                 submission.getLanguageId(),
                 submission.getStatus().name(),
                 submission.getCreatedAt(),
-                submission.getUpdatedAt()
+                submission.getUpdatedAt(),
+                submission.getResultDetails()
         );
     }
 }
