@@ -22,6 +22,7 @@ public class PolygonProblemService {
 
 
     public List<PolygonProblem.Test> getTests(String polygonId) {
+
         try {
             return cache.get(polygonId, () -> {
                 log.info("Fetching fresh tests for problem {} from Polygon", polygonId);

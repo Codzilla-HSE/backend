@@ -13,11 +13,16 @@ jar {
     enabled = false
 }
 
-//java {
-//    toolchain {
-//        languageVersion = JavaLanguageVersion.of(23)
-//    }
-//}
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(23)
+    }
+}
+
+test {
+    maxHeapSize = "512m"
+    forkEvery = 1
+}
 
 repositories {
     mavenCentral()
@@ -47,9 +52,12 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testRuntimeOnly 'com.h2database:h2'
+    testImplementation 'com.h2database:h2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
 }
 
 tasks.named('test') {

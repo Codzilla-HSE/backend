@@ -1,8 +1,10 @@
 package com.codzilla.backend.controller.Sandbox.polygon;
 
 import com.codzilla.backend.controller.Sandbox.problem.Problem;
+import lombok.Builder;
 import lombok.Data;
 import java.util.List;
+
 
 @Data
 public class CreateProblemRequest {
@@ -15,5 +17,10 @@ public class CreateProblemRequest {
     public static class TestCase {
         private String input;
         private String output;
+
+//        public TestCase(String input, String output) {
+//            this.input = input;
+//            this.output = output;
+//        }
     }
 }

@@ -1,9 +1,6 @@
 package com.codzilla.backend.controller.Sandbox.submission;
 
 import com.codzilla.backend.controller.Sandbox.judge0.Judge0Client;
-import com.codzilla.backend.controller.Sandbox.polygon.PolygonProblemService;
-import com.codzilla.backend.controller.Sandbox.problem.Problem;
-import com.codzilla.backend.controller.Sandbox.problem.ProblemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,7 +12,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -24,9 +20,8 @@ import java.util.List;
 public class SubmissionPollingService {
 
     private final SubmissionRepository submissionRepository;
+    private final SubmissionTestRepository submissionTestRepository;
     private final Judge0Client judge0Client;
-    final private PolygonProblemService polygonProblemService;
-    final private ProblemRepository problemRepository;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -37,34 +32,82 @@ public class SubmissionPollingService {
 
     @Scheduled(fixedDelay = 2000)
     public void pollStatuses() {
-        List<Submission> pending = getPendingSubmissions();
+        List<SubmissionTest> pending = submissionTestRepository
+                .findAllByStatus(SubmissionTest.Status.IN_QUEUE);
 
-        for (Submission sub : pending) {
-            var response = judge0Client.getSubmissionStatus(sub.getJudge0Token());
-            if (response != null && response.getStatus() != null && response.getStatus().getId() > 2) {
-                updateSubmissionStatus(sub, response);
-            }
+        for (SubmissionTest subTest : pending) {
+            var response = judge0Client.getSubmissionStatus(subTest.getJudge0Token());
+            if (response == null || response.getStatus() == null) continue;
+            if (response.getStatus().getId() <= 2) continue; // ещё обрабатывается
+
+            updateTestStatus(subTest, response);
+            updateSubmissionStatus(subTest.getSubmissionId());
         }
     }
 
-    private void updateSubmissionStatus(Submission sub, Judge0Client.SubmissionResponse response) {
-        String description = response.getStatus().getDescription();
+    private void updateTestStatus(SubmissionTest subTest, Judge0Client.SubmissionResponse response) {
+        int statusId = response.getStatus().getId();
+        String actual = response.getStdout() == null ? "" : response.getStdout().trim();
 
-        if ("Accepted".equals(description)) {
-            sub.setStatus(Submission.Status.ACCEPTED);
-        } else if (description.contains("Compile Error")) {
-            sub.setStatus(Submission.Status.COMPILE_ERROR);
-        } else if (description.contains("Wrong Answer")) {
-            sub.setStatus(Submission.Status.WRONG_ANSWER);
+        subTest.setActualOutput(actual);
+
+        if (statusId == 6) {
+            subTest.setStatus(SubmissionTest.Status.COMPILE_ERROR);
+        } else if (statusId >= 7 && statusId <= 12) {
+            subTest.setStatus(SubmissionTest.Status.RUNTIME_ERROR);
+        } else if (statusId == 3) {
+            String expected = subTest.getExpectedOutput() == null ? "" : subTest.getExpectedOutput().trim();
+            if (actual.equals(expected)) {
+                subTest.setStatus(SubmissionTest.Status.ACCEPTED);
+            } else {
+                subTest.setStatus(SubmissionTest.Status.WRONG_ANSWER);
+            }
         } else {
-            sub.setStatus(Submission.Status.RUNTIME_ERROR);
+            subTest.setStatus(SubmissionTest.Status.RUNTIME_ERROR);
         }
 
-        sub.setResultDetails(description);
+        submissionTestRepository.save(subTest);
+        log.info("Test {} of submission {} → {}",
+                subTest.getTestIndex(), subTest.getSubmissionId(), subTest.getStatus());
+    }
+
+    private void updateSubmissionStatus(Long submissionId) {
+        List<SubmissionTest> allTests = submissionTestRepository
+                .findAllBySubmissionIdOrderByTestIndex(submissionId);
+
+        boolean allDone = allTests.stream()
+                .allMatch(t -> t.getStatus() != SubmissionTest.Status.IN_QUEUE);
+
+        if (!allDone) return;
+
+        // ищем первый провальный тест
+        SubmissionTest firstFailed = allTests.stream()
+                .filter(t -> t.getStatus() != SubmissionTest.Status.ACCEPTED)
+                .findFirst()
+                .orElse(null);
+
+        Submission sub = submissionRepository.findById(submissionId).orElse(null);
+        if (sub == null) return;
+
+        if (firstFailed == null) {
+            sub.setStatus(Submission.Status.ACCEPTED);
+            sub.setResultDetails("All " + allTests.size() + " tests passed");
+        } else {
+            Submission.Status status = switch (firstFailed.getStatus()) {
+                case WRONG_ANSWER -> Submission.Status.WRONG_ANSWER;
+                case COMPILE_ERROR -> Submission.Status.COMPILE_ERROR;
+                default -> Submission.Status.RUNTIME_ERROR;
+            };
+            sub.setStatus(status);
+            sub.setResultDetails(
+                    "Failed on test " + firstFailed.getTestIndex() +
+                            "\nExpected: " + firstFailed.getExpectedOutput() +
+                            "\nGot: " + firstFailed.getActualOutput()
+            );
+        }
+
         submissionRepository.save(sub);
-
-        log.info("Submission {} finished with verdict: {}", sub.getId(), description);
-
+        log.info("Submission {} final verdict: {}", submissionId, sub.getStatus());
         eventPublisher.publishEvent(new SubmissionUpdatedEvent(sub.getUserId()));
     }
 }

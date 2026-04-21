@@ -1,5 +1,6 @@
 package com.codzilla.backend.controller.Sandbox.polygon;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -35,10 +36,11 @@ public class PolygonClient {
     @Value("${polygon.api.secret}")
     private String apiSecret;
 
-    private final RestClient restClient;
+    private RestClient restClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public PolygonClient() {
+    @PostConstruct
+    public void init() {
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader("Accept", "application/json")
@@ -48,14 +50,14 @@ public class PolygonClient {
 
 
     public PolygonProblem getProblemTests(String problemId) {
+        log.info("Polygon api URL:{}", baseUrl);
         var params = new TreeMap<String, String>();
         params.put("problemId", problemId);
         params.put("testset", "tests");
 
-        String url = buildSignedUrl("problem.tests", params);
-
+        String fullUrl = buildSignedUrl("problem.tests", params);
         String raw = restClient.get()
-                .uri(url)
+                .uri(fullUrl)
                 .retrieve()
                 .onStatus(status -> true, (req, res) -> {})
                 .body(String.class);
