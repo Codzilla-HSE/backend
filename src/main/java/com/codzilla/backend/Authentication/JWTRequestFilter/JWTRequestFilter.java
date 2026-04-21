@@ -1,6 +1,5 @@
 package com.codzilla.backend.Authentication.JWTRequestFilter;
 
-import com.codzilla.backend.Authentication.RepositoryUserDetailsService;
 import com.codzilla.backend.User.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,11 +21,9 @@ import com.codzilla.backend.Authentication.JWTUtils.JWTUtils;
 @Component
 public class JWTRequestFilter extends OncePerRequestFilter {
     JWTUtils jwtUtils;
-    RepositoryUserDetailsService userDetailsService;
 
-    public JWTRequestFilter(JWTUtils jwtUtils, RepositoryUserDetailsService userDetailsService) {
+    public JWTRequestFilter(JWTUtils jwtUtils) {
         this.jwtUtils = jwtUtils;
-        this.userDetailsService = userDetailsService;
     }
 
     @Override
@@ -54,8 +51,8 @@ public class JWTRequestFilter extends OncePerRequestFilter {
                         .map(SimpleGrantedAuthority::new)
                         .toList();
 
-                User user = (User) userDetailsService.loadUserByUsername(email);
-
+                User user = User.builder()
+                                .email(email).build();
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                         user,
                         null,

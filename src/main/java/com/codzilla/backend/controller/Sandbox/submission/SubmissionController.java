@@ -1,12 +1,14 @@
 package com.codzilla.backend.controller.Sandbox.submission;
 
 import com.codzilla.backend.User.User;
+import com.codzilla.backend.User.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,6 +32,7 @@ public class SubmissionController {
     private final SubmissionRepository submissionRepository;
 
     private final Map<UUID, ConcurrentLinkedQueue<DeferredResult<ResponseEntity<List<SubmissionResponseDTO>>>>> waiters = new ConcurrentHashMap<>();
+    private final UserRepository userRepository;
 
     @GetMapping
     public DeferredResult<ResponseEntity<List<SubmissionResponseDTO>>> getUserSubmissions(
@@ -43,7 +46,9 @@ public class SubmissionController {
             return output;
         }
 
-        UUID userId = user.getId();
+        User fullUser = userRepository.findByEmail(user.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        UUID userId = fullUser.getId();
 
         output.onTimeout(() -> output.setResult(ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()));
 
