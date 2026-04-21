@@ -1,5 +1,6 @@
 package com.codzilla.backend.Sandbox;
 
+import com.codzilla.backend.S3.S3Repository;
 import com.codzilla.backend.controller.Sandbox.judge0.Judge0Client;
 import com.codzilla.backend.controller.Sandbox.polygon.*;
 import com.codzilla.backend.controller.Sandbox.problem.*;
@@ -41,6 +42,9 @@ public class SandboxTest {
 
     @Mock
     private PolygonClient polygonClient;
+
+    @Mock
+    private S3Repository s3Repository;
 
     @InjectMocks
     private ProblemService problemService;
