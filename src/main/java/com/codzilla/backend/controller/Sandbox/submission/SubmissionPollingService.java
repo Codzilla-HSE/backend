@@ -13,6 +13,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,10 +30,16 @@ public class SubmissionPollingService {
 
     private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional(readOnly = true)
+    public List<Submission> getPendingSubmissions() {
+        return submissionRepository.findAllByStatus(Submission.Status.IN_QUEUE);
+    }
+
     @Scheduled(fixedDelay = 2000)
     public void pollStatuses() {
-        List<Submission> pending = submissionRepository.findAllByStatus(Submission.Status.IN_QUEUE);
-        for (Submission sub : pending) {
+        List<Submission> pending = getPendingSubmissions(); // транзакция закрылась здесь
+
+        for (Submission sub : pending) { // Judge0 вызывается уже без открытой транзакции
             var response = judge0Client.getSubmissionStatus(sub.getJudge0Token());
             if (response != null && response.getStatus() != null && response.getStatus().getId() > 2) {
                 updateSubmissionStatus(sub, response);

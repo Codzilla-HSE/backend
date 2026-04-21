@@ -1,20 +1,19 @@
 package com.codzilla.backend.controller.Sandbox.submission;
 
 import com.codzilla.backend.User.User;
-import com.codzilla.backend.User.UserRepository;
+// UserRepository удален за ненадобностью
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal; // Добавлен импорт
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -30,31 +29,29 @@ import java.util.stream.Collectors;
 public class SubmissionController {
 
     private final SubmissionRepository submissionRepository;
-    private final UserRepository userRepository;
 
     private final Map<UUID, ConcurrentLinkedQueue<DeferredResult<ResponseEntity<List<SubmissionResponseDTO>>>>> waiters = new ConcurrentHashMap<>();
 
     @GetMapping
     public DeferredResult<ResponseEntity<List<SubmissionResponseDTO>>> getUserSubmissions(
-            Principal principal,
+            @AuthenticationPrincipal User user,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastUpdate) {
 
         DeferredResult<ResponseEntity<List<SubmissionResponseDTO>>> output = new DeferredResult<>(20000L);
 
-        if (principal == null) {
-            output.setResult(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-            return output;
+        if (user != null) {
+            System.out.println("Principal class: " + user.getClass().getName());
+            System.out.println("::" + user.getId());
+        } else {
+            System.out.println("Principal is NULL");
         }
-
-        User user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         UUID userId = user.getId();
 
         output.onTimeout(() -> output.setResult(ResponseEntity.status(HttpStatus.NOT_MODIFIED).build()));
 
         Optional<Submission> latestSub = submissionRepository.findFirstByUserIdOrderByUpdatedAtDesc(userId);
-        boolean hasUpdates = lastUpdate == null || 
+        boolean hasUpdates = lastUpdate == null ||
                 (latestSub.isPresent() && latestSub.get().getUpdatedAt().isAfter(lastUpdate));
 
         if (hasUpdates) {
@@ -77,10 +74,10 @@ public class SubmissionController {
     @EventListener
     public void onSubmissionUpdated(SubmissionUpdatedEvent event) {
         ConcurrentLinkedQueue<DeferredResult<ResponseEntity<List<SubmissionResponseDTO>>>> queue = waiters.get(event.userId());
-        
+
         if (queue != null && !queue.isEmpty()) {
             List<SubmissionResponseDTO> freshData = fetchUserSubmissions(event.userId());
-            
+
             DeferredResult<ResponseEntity<List<SubmissionResponseDTO>>> result;
             while ((result = queue.poll()) != null) {
                 result.setResult(ResponseEntity.ok(freshData));

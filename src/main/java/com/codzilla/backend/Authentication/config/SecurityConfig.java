@@ -3,6 +3,7 @@ package com.codzilla.backend.Authentication.config;
 import com.codzilla.backend.Authentication.AdminAccessDeniedHandler;
 import com.codzilla.backend.Authentication.HttpStatusEntryPoint;
 import com.codzilla.backend.Authentication.JWTRequestFilter.JWTRequestFilter;
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -49,7 +50,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(adminAccessDeniedHandler)
                 )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.requestMatchers(WHITELIST).permitAll().anyRequest().authenticated())
+                .authorizeHttpRequests(auth -> auth.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll().requestMatchers(WHITELIST).permitAll().anyRequest().authenticated())
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class).build();
     }
 
