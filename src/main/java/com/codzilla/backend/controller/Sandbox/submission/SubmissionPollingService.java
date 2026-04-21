@@ -3,8 +3,14 @@ package com.codzilla.backend.controller.Sandbox.submission;
 import com.codzilla.backend.controller.Sandbox.judge0.Judge0Client;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import com.codzilla.backend.controller.Sandbox.submission.SubmissionUpdatedEvent; 
+
+import org.springframework.context.ApplicationEventPublisher; 
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,6 +22,13 @@ public class SubmissionPollingService {
     private final SubmissionRepository submissionRepository;
     private final SubmissionTestRepository submissionTestRepository;
     private final Judge0Client judge0Client;
+
+    private final ApplicationEventPublisher eventPublisher;
+
+    @Transactional(readOnly = true)
+    public List<Submission> getPendingSubmissions() {
+        return submissionRepository.findAllByStatus(Submission.Status.IN_QUEUE);
+    }
 
     @Scheduled(fixedDelay = 2000)
     public void pollStatuses() {
@@ -95,5 +108,6 @@ public class SubmissionPollingService {
 
         submissionRepository.save(sub);
         log.info("Submission {} final verdict: {}", submissionId, sub.getStatus());
+        eventPublisher.publishEvent(new SubmissionUpdatedEvent(sub.getUserId()));
     }
 }

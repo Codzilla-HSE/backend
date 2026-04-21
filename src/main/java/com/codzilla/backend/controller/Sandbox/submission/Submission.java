@@ -17,8 +17,6 @@ import java.util.UUID;
 @Data
 public class Submission {
 
-
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
