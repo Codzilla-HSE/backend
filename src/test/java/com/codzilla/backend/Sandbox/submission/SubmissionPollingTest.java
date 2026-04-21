@@ -6,6 +6,7 @@
     import org.mockito.InjectMocks;
     import org.mockito.Mock;
     import org.mockito.junit.jupiter.MockitoExtension;
+    import org.springframework.context.ApplicationEventPublisher;
 
     import java.util.List;
     import java.util.Optional;
@@ -22,6 +23,9 @@
 
         @Mock
         private Judge0Client judge0Client;
+
+        @Mock
+        ApplicationEventPublisher eventPublisher;
 
         @InjectMocks
         private SubmissionPollingService pollingService;
