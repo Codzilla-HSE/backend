@@ -3,6 +3,7 @@ package com.codzilla.backend.Authentication;
 
 import com.codzilla.backend.Authentication.dto.LoginRequestDTO;
 import com.codzilla.backend.Authentication.dto.RegisterRequestDTO;
+import com.codzilla.backend.BaseIntegrationTest;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

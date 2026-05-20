@@ -14,6 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import com.codzilla.backend.Authentication.JWTUtils.JWTUtils;
 
@@ -27,10 +28,12 @@ public class JWTRequestFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
         log.info("In filter.");
         String token = null;
         if (request.getCookies() != null) {
+            log.info("COOKIE: " + request.getCookies().toString());
             for (var cookie : request.getCookies()) {
                 log.info("Cookie: " + cookie.getName());
                 if ("jwt".equals(cookie.getName())) {
@@ -45,14 +48,19 @@ public class JWTRequestFilter extends OncePerRequestFilter {
             try {
                 String email = jwtUtils.getEmailFromToken(token);
                 List<String> roles = jwtUtils.getRolesFromToken(token);
-                log.info("{} has jwt. His roles: {}", email, roles);
+                UUID uuid = jwtUtils.getIdFromToken(token);
+                log.info(
+                        "{} has jwt. His roles: {}",
+                        email,
+                        roles
+                );
 
                 List<SimpleGrantedAuthority> authorities = roles.stream()
-                        .map(SimpleGrantedAuthority::new)
-                        .toList();
+                                                                .map(SimpleGrantedAuthority::new)
+                                                                .toList();
 
                 User user = User.builder()
-                                .email(email).build();
+                                .email(email).id(uuid).build();
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                         user,
                         null,
@@ -69,7 +77,10 @@ public class JWTRequestFilter extends OncePerRequestFilter {
 
         }
 
-        filterChain.doFilter(request, response);
+        filterChain.doFilter(
+                request,
+                response
+        );
 
     }
 }

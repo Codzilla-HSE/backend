@@ -35,7 +35,7 @@ public class User implements UserDetails, CredentialsContainer {
     private String email;
 
 
-    private int rating = 100;
+    private Integer rating = 100;
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @JdbcTypeCode(SqlTypes.UUID)
