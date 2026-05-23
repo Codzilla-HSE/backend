@@ -78,6 +78,8 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
     private DraftSession draftSession;
     @Autowired
     private WebContentGenerator webContentGenerator;
+    @Autowired
+    private DraftSessionService draftSessionService;
 
     @BeforeEach
     void setup() throws Exception {
@@ -119,6 +121,7 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
                               )).exchange()
                               .expectStatus().isOk()
                               .returnResult().getResponseCookies().getFirst("jwt").getValue();
+//        when(draftSessionSettings.getTimeToPick()).thenReturn(Duration.ofMillis(50000));
         createDraftSession();
 
         List<Transport> transports = List.of(new WebSocketTransport(new StandardWebSocketClient()));
@@ -185,6 +188,20 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
                     }
                 }
         );
+        user1Session.subscribe(
+                "/user/queue/errors",
+                new StompSessionHandlerAdapter() {
+                    @Override
+                    public Type getPayloadType(StompHeaders headers) {
+                        return DraftSessionResponseDTO.class;
+                    }
+
+                    @Override
+                    public void handleFrame(StompHeaders headers, @Nullable Object payload) {
+                        user1Queue.add((DraftSessionResponseDTO) payload);
+                    }
+                }
+        );
         user2Session.subscribe(
                 "/topic/draft-session/" + draftSession.getId(),
                 new StompSessionHandlerAdapter() {
@@ -199,7 +216,23 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
                     }
                 }
         );
-        when(draftSessionSettings.getTimeToPick()).thenReturn(Duration.ofMillis(500));
+        user2Session.subscribe(
+                "/user/queue/errors",
+                new StompSessionHandlerAdapter() {
+                    @Override
+                    public Type getPayloadType(StompHeaders headers) {
+                        return DraftSessionResponseDTO.class;
+                    }
+
+                    @Override
+                    public void handleFrame(StompHeaders headers, @Nullable Object payload) {
+                        user2Queue.add((DraftSessionResponseDTO) payload);
+                    }
+                }
+        );
+        user1Queue.take();
+        user2Queue.take();
+
     }
 
     @AfterEach
@@ -217,11 +250,10 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
     }
 
     void createDraftSession() {
-        var draftSession = new DraftSession(
+        this.draftSession = draftSessionService.startDraftSession(
                 user1.getId(),
                 user2.getId()
         );
-        this.draftSession = draftSessionRepository.save(draftSession);
         log.info("Draft session id: " + draftSession.getId());
     }
 
@@ -293,15 +325,18 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
                 )
         );
 
-        var res = user1Queue.poll(
-                1,
-                TimeUnit.SECONDS
-        );
+        var res = user1Queue.take();
         assertNotNull(res);
 
         assertEquals(
                 DraftSessionResponseDTO.Status.SUCCEED,
                 res.getStatus()
+        );
+        assertFalse(res.getDraftSession().getRemainOptions().get(Category.Language)
+                       .contains(Language.CPP.name()));
+        log.info(
+                "FIRST: {}",
+                res.getDraftSession().getRemainOptions()
         );
 
         user1Session.send(
@@ -317,13 +352,11 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
                 TimeUnit.SECONDS
         );
         assertNotNull(res);
-
         assertEquals(
                 DraftSessionResponseDTO.Status.ERROR,
                 res.getStatus()
         );
 
-        log.info("Error message: " + res.getError());
     }
 
     @Test
@@ -359,8 +392,15 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
                 1,
                 TimeUnit.SECONDS
         );
+        user2Queue.poll(
+                1,
+                TimeUnit.SECONDS
+        );
         assertNotNull(res);
-
+        assertEquals(
+                DraftSessionResponseDTO.Status.SUCCEED,
+                res.getStatus()
+        );
         user2Session.send(
                 "/app/" + draftSession.getId() + "/ban",
                 new OptionEntity(
@@ -369,7 +409,7 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
                 )
         );
 
-        res = user1Queue.poll(
+        res = user2Queue.poll(
                 1,
                 TimeUnit.SECONDS
         );
@@ -379,17 +419,13 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
         assertEquals(
                 DraftSessionResponseDTO.Status.ERROR,
                 res.getStatus(),
-                "We can ban one option twice!"
+                "We cant ban one option twice!"
         );
 
     }
 
     @Test
     void DraftSession_CantBanTheLastOptionInCategory() throws InterruptedException {
-
-        log.info("All sessions : " +
-                         draftSessionRepository.findAll().stream().map(DraftSession::getId)
-                                               .toList());
 
         var categoryOptional = Arrays.stream(Category.values()).findFirst();
         assertTrue(
@@ -398,7 +434,8 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
         );
         var category = categoryOptional.get();
 
-        List<DraftSessionResponseDTO> allMessages = new ArrayList<>();
+        List<DraftSessionResponseDTO> user1Messages = new ArrayList<>();
+        List<DraftSessionResponseDTO> user2Messages = new ArrayList<>();
         for (var option : category.getEnumClass().getEnumConstants()) {
             (draftSession.isFirstUserMove() ? user1Session : user2Session)
                     .send(
@@ -408,23 +445,33 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
                                     option.name()
                             )
                     );
-            draftSession.setFirstUserMove(!draftSession.isFirstUserMove);
+
             log.info(
                     "{}, {}",
                     category,
                     option
             );
-            allMessages.add(user1Queue.take());
+            var res1 = user1Queue.poll(
+                    1,
+                    TimeUnit.SECONDS
+            );
+            var res2 = user2Queue.poll(
+                    1,
+                    TimeUnit.SECONDS
+            );
+            if (res1 != null) {
+                user1Messages.add(res1);
+            }
+            if (res2 != null) {
+                user2Messages.add(res2);
+            }
+
+            draftSession.setFirstUserMove(!draftSession.isFirstUserMove);
         }
 
-        assertEquals(
-                DraftSessionResponseDTO.Status.ERROR,
-                allMessages.getLast().getStatus()
-        );
-
-        log.info(
-                "Error message: {}",
-                allMessages.getLast().getError()
+        assertTrue(
+                user1Messages.getLast().getStatus() == DraftSessionResponseDTO.Status.ERROR ||
+                        user2Messages.getLast().getStatus() == DraftSessionResponseDTO.Status.ERROR
         );
     }
 
@@ -470,5 +517,27 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
                 optionsRemainAfterRandomBan
         );
     }
+
+//    @Test
+//    void fullAutoPickSession() throws InterruptedException {
+//        when(draftSessionSettings.getTimeToPick()).thenReturn(Duration.ofMillis(100));
+//        Thread.sleep(5000);
+//        DraftSessionResponseDTO last = null;
+//        while (!user1Queue.isEmpty()) {
+//            last = user1Queue.take();
+//        }
+//        assertNotNull(last);
+//        assertEquals(
+//                DraftSessionResponseDTO.Status.SUCCEED,
+//                last.getStatus()
+//        );
+//        assertEquals(
+//                DraftSession.Status.PICKING,
+//                last.getDraftSession().getStatus()
+//        );
+//
+//        assertTrue(last.getDraftSession().getRemainOptions().values().stream()
+//                       .allMatch((options) -> options.size() == 1));
+//    }
 
 }

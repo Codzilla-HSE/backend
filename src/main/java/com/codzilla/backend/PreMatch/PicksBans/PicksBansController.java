@@ -12,6 +12,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -41,16 +42,7 @@ public class PicksBansController {
             @AuthenticationPrincipal Authentication auth,
             @Payload OptionEntity optionEntity) {
         User user = (User) auth.getPrincipal();
-        log.info("In ban controller");
-        log.info(
-                "User : {}",
-                user
-        );
-        log.info(
-                "Request: {}",
-                optionEntity.getBanObject()
-        );
-        log.info("All sessions: {}", draftSessionRepository.findAll().stream().map(DraftSession::getId).toList());
+        log.info("request: {}", optionEntity.getBanObject());
         try {
             assert user != null;
             var draftSession = draftSessionService.processBan(
@@ -66,13 +58,19 @@ public class PicksBansController {
                             null
                     )
             );
+            log.info("USER: {}, isFirst {}", user.getUsername(), draftSession.isFirstUserMove());
         } catch (DraftSessionException exception) {
             log.info(
                     "Exception: {}",
                     exception.toString()
             );
-            messagingTemplate.convertAndSend(
-                    "/topic/draft-session/" + draftSessionId,
+            log.info(
+                    "User Username: {}",
+                    user.getUsername()
+            );
+            messagingTemplate.convertAndSendToUser(
+                    user.getUsername(),
+                    "/queue/errors",
                     new DraftSessionResponseDTO(
                             DraftSessionResponseDTO.Status.ERROR,
                             null,
@@ -80,5 +78,23 @@ public class PicksBansController {
                     )
             );
         }
+    }
+
+    @SubscribeMapping("/draft-session/{draftSessionId}")
+    public DraftSessionResponseDTO getInitialState(@DestinationVariable UUID draftSessionId) {
+
+
+        var draftSession = draftSessionService.findById(draftSessionId);
+        log.info("Subscribed.");
+        if (draftSession.isEmpty()) {
+            return new DraftSessionResponseDTO(DraftSessionResponseDTO.Status.ERROR, null,
+                                               "Incorrect session id");
+        }
+        log.info("Subscribed. Draft session id: {}", draftSession.get().getId());
+        return new DraftSessionResponseDTO(
+                DraftSessionResponseDTO.Status.SUCCEED,
+                draftSession.get(),
+                null
+        );
     }
 }

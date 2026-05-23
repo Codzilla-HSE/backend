@@ -11,10 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
@@ -192,5 +189,15 @@ public class DraftSessionService {
         if (draftSession.getStatus().equals(DraftSession.Status.PICKING)) {
             startTimer(draftSessionId);
         }
+    }
+
+    public Optional<DraftSession> findById(UUID id) {
+        return draftSessionRepository.findById(id);
+    }
+    public DraftSession startDraftSession(UUID firstUserId, UUID secondUserId) {
+        DraftSession draftSession = new DraftSession(firstUserId, secondUserId);
+        draftSessionRepository.save(draftSession);
+        startTimer(draftSession.getId());
+        return draftSession;
     }
 }
