@@ -121,7 +121,7 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
                               )).exchange()
                               .expectStatus().isOk()
                               .returnResult().getResponseCookies().getFirst("jwt").getValue();
-//        when(draftSessionSettings.getTimeToPick()).thenReturn(Duration.ofMillis(50000));
+        when(draftSessionSettings.getTimeToPick()).thenReturn(Duration.ofMillis(50000));
         createDraftSession();
 
         List<Transport> transports = List.of(new WebSocketTransport(new StandardWebSocketClient()));
@@ -268,8 +268,8 @@ class DraftSessionServiceTest extends BaseIntegrationTest {
         );
 
 
-        var res1 = user1Queue.take();
-        var res2 = user2Queue.take();
+        var res1 = user1Queue.poll(1, TimeUnit.SECONDS);
+        var res2 = user2Queue.poll(1, TimeUnit.SECONDS);
 
         assertNotEquals(
                 null,
