@@ -17,7 +17,6 @@ import java.util.*;
 public class DraftSession {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @JdbcTypeCode(SqlTypes.UUID)
     UUID id;
 
@@ -46,10 +45,11 @@ public class DraftSession {
     }
 
 
-    public DraftSession(UUID firstUserId, UUID secondUserId) {
+    public DraftSession(UUID matchId, UUID firstUserId, UUID secondUserId) {
         this();
         this.firstUserId = firstUserId;
         this.secondUserId = secondUserId;
+        this.id = matchId;
     }
 
     public enum Status {

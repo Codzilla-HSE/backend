@@ -1,4 +1,4 @@
-package com.codzilla.backend.PreMatch.model;
+package com.codzilla.backend.PreMatch.DTO;
 
 import com.codzilla.backend.PreMatch.DraftSession.DraftSession;
 import lombok.AllArgsConstructor;
@@ -10,12 +10,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class DraftSessionResponseDTO {
-    Status status;
     DraftSession draftSession;
-    String error;
-
-    public enum Status {
-        ERROR,
-        SUCCEED
-    }
 }
