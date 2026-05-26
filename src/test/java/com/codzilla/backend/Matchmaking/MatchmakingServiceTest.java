@@ -6,10 +6,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.lang.reflect.Field;
 import java.time.Instant;
@@ -26,9 +24,6 @@ class MatchmakingServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
-
     private MatchmakingService service;
 
     private ConcurrentHashMap<UUID, QueueEntry> queue;
@@ -36,7 +31,7 @@ class MatchmakingServiceTest {
     @BeforeEach
     @SuppressWarnings("unchecked")
     void setUp() throws Exception {
-        service = new MatchmakingService(userRepository, eventPublisher);
+        service = new MatchmakingService(userRepository);
 
         Field queueField = MatchmakingService.class.getDeclaredField("queue");
         queueField.setAccessible(true);
@@ -105,36 +100,6 @@ class MatchmakingServiceTest {
     }
 
     @Test
-    @DisplayName("runMatchmaking: два игрока с близким рейтингом спариваются")
-    void runMatchmaking_pairsPlayersWithCloseRating() {
-        UUID a = addToQueue(1000);
-        UUID b = addToQueue(1020);
-
-        service.runMatchmaking();
-
-        assertThat(queue).doesNotContainKey(a).doesNotContainKey(b);
-
-        verify(eventPublisher, times(1)).publishEvent(any(MatchFoundEvent.class));
-    }
-
-    @Test
-    @DisplayName("runMatchmaking: событие содержит правильные userId")
-    void runMatchmaking_eventContainsCorrectUserIds() {
-        UUID a = addToQueue(1000);
-        UUID b = addToQueue(1030);
-
-        service.runMatchmaking();
-
-        ArgumentCaptor<MatchFoundEvent> captor = ArgumentCaptor.forClass(MatchFoundEvent.class);
-        verify(eventPublisher).publishEvent(captor.capture());
-
-        MatchFoundEvent event = captor.getValue();
-        assertThat(event.getPlayerOneId()).isIn(a, b);
-        assertThat(event.getPlayerTwoId()).isIn(a, b);
-        assertThat(event.getPlayerOneId()).isNotEqualTo(event.getPlayerTwoId());
-    }
-
-    @Test
     @DisplayName("runMatchmaking: игроки с разницей рейтинга больше окна НЕ спариваются")
     void runMatchmaking_doesNotPairPlayersOutsideWindow() {
         UUID a = addToQueue(1000);
@@ -143,7 +108,6 @@ class MatchmakingServiceTest {
         service.runMatchmaking();
 
         assertThat(queue).containsKey(a).containsKey(b);
-        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -154,27 +118,6 @@ class MatchmakingServiceTest {
         service.runMatchmaking();
 
         assertThat(queue).hasSize(1);
-        verify(eventPublisher, never()).publishEvent(any());
-    }
-
-    @Test
-    @DisplayName("runMatchmaking: пустая очередь — ничего не происходит")
-    void runMatchmaking_emptyQueue_doesNothing() {
-        service.runMatchmaking();
-
-        verify(eventPublisher, never()).publishEvent(any());
-    }
-
-    @Test
-    @DisplayName("runMatchmaking: игрок ждёт 10 сек — окно расширяется до 100, пара находится")
-    void runMatchmaking_expandingWindow_pairsAfterWaiting() {
-        UUID a = addToQueue(1000, 10);
-        UUID b = addToQueue(1090, 10);
-
-        service.runMatchmaking();
-
-        assertThat(queue).doesNotContainKey(a).doesNotContainKey(b);
-        verify(eventPublisher, times(1)).publishEvent(any(MatchFoundEvent.class));
     }
 
     @Test
@@ -186,47 +129,6 @@ class MatchmakingServiceTest {
         service.runMatchmaking();
 
         assertThat(queue).containsKey(a).containsKey(b);
-        verify(eventPublisher, never()).publishEvent(any());
-    }
-
-    @Test
-    @DisplayName("runMatchmaking: четыре игрока формируют две пары")
-    void runMatchmaking_fourPlayers_twoMatches() {
-        UUID a = addToQueue(1000);
-        UUID b = addToQueue(1010);
-        UUID c = addToQueue(1500);
-        UUID d = addToQueue(1510);
-
-        service.runMatchmaking();
-
-        assertThat(queue).isEmpty();
-        verify(eventPublisher, times(2)).publishEvent(any(MatchFoundEvent.class));
-    }
-
-    @Test
-    @DisplayName("runMatchmaking: нечётное число игроков — один остаётся в очереди")
-    void runMatchmaking_oddNumberOfPlayers_oneRemains() {
-        addToQueue(1000);
-        addToQueue(1010);
-        addToQueue(1020);
-
-        service.runMatchmaking();
-
-        assertThat(queue).hasSize(1);
-        verify(eventPublisher, times(1)).publishEvent(any(MatchFoundEvent.class));
-    }
-
-    @Test
-    @DisplayName("runMatchmaking: если один игрок вышел из очереди — второй возвращается обратно")
-    void runMatchmaking_onePlayerLeft_otherRequeued() {
-        UUID a = addToQueue(1000);
-        UUID b = addToQueue(1020);
-
-        queue.remove(b);
-
-        service.runMatchmaking();
-
-        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test

@@ -4,7 +4,6 @@ import com.codzilla.backend.Authentication.Exceptions.UserNotFoundException;
 import com.codzilla.backend.Matchmaking.dto.MatchStatusDTO;
 import com.codzilla.backend.User.UserRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -20,14 +19,10 @@ public class MatchmakingService {
     public static final int MAX_WINDOW  = 400;
 
     private final ConcurrentHashMap<UUID, QueueEntry> queue = new ConcurrentHashMap<>();
-
     private final UserRepository userRepository;
-    private final ApplicationEventPublisher eventPublisher;
 
-    public MatchmakingService(UserRepository userRepository,
-                              ApplicationEventPublisher eventPublisher) {
+    public MatchmakingService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.eventPublisher = eventPublisher;
     }
 
     public void enterQueue(UUID userId) {
@@ -92,8 +87,7 @@ public class MatchmakingService {
             log.warn("[MM] Pairing cancelled: one of users left queue ({} or {})", a, b);
             return;
         }
-
+        // TODO implement create session call
         log.info("[MM] Paired: {} vs {}", a, b);
-        eventPublisher.publishEvent(new MatchFoundEvent(this, a, b));
     }
 }
