@@ -1,5 +1,6 @@
 package com.codzilla.backend.Authentication;
 
+import com.codzilla.backend.BaseIntegrationTest;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.Authentication.Exceptions.UserAlreadyExistsException;
 import com.codzilla.backend.Authentication.dto.ErrorResponseDTO;

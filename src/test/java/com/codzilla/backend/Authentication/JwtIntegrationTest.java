@@ -5,6 +5,7 @@ import com.codzilla.backend.Authentication.JWTUtils.JWTUtils;
 import com.codzilla.backend.Authentication.config.AuthSettings;
 import com.codzilla.backend.Authentication.dto.LoginRequestDTO;
 import com.codzilla.backend.Authentication.dto.RegisterRequestDTO;
+import com.codzilla.backend.BaseIntegrationTest;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -46,7 +46,9 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(request.email(), request.rawPassword())
         );
 
-        var accessToken = jwtUtils.generateAccessToken(auth);
+        User user = (User) auth.getPrincipal();
+
+        var accessToken = jwtUtils.generateAccessToken(user);
         Cookie jwtCookie = new Cookie("jwt", accessToken);
         jwtCookie.setHttpOnly(true);
         jwtCookie.setSecure(false);
@@ -54,15 +56,13 @@ public class AuthController {
         jwtCookie.setMaxAge((int) settings.getRefreshTokenTtl().toSeconds());
         response.addCookie(jwtCookie);
 
-        var refreshToken = jwtUtils.generateRefreshToken(auth);
+        var refreshToken = jwtUtils.generateRefreshToken(user);
         Cookie refreshCookie = new Cookie("refresh_jwt", refreshToken);
         refreshCookie.setPath("/");
         refreshCookie.setHttpOnly(true);
         refreshCookie.setMaxAge((int) settings.getRefreshTokenTtl().toSeconds());
         refreshCookie.setSecure(false);
         response.addCookie(refreshCookie);
-
-        User user = userService.getByEmail(request.email());
         return ResponseEntity.ok(new LoginResponseDTO(user.getNickname()));
     }
 
@@ -104,13 +104,8 @@ public class AuthController {
 
             User user = userService.getByEmail(email);
 
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    user,
-                    null,
-                    user.getAuthorities()
-            );
 
-            var accessToken = jwtUtils.generateAccessToken(auth);
+            var accessToken = jwtUtils.generateAccessToken(user);
             Cookie cookie = new Cookie("jwt", accessToken);
             cookie.setHttpOnly(true);
             cookie.setSecure(false);

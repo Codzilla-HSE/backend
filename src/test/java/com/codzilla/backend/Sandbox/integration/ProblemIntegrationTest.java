@@ -1,13 +1,18 @@
 package com.codzilla.backend.Sandbox.integration;
 
+import com.codzilla.backend.Authentication.JWTRequestFilter.JWTRequestFilter;
+import com.codzilla.backend.Authentication.JWTUtils.JWTUtils;
 import com.codzilla.backend.S3.S3Initialization;
 import com.codzilla.backend.User.UserRepository;
 
+import com.codzilla.backend.User.UserService;
 import com.codzilla.backend.controller.Sandbox.judge0.Judge0Client;
 import com.codzilla.backend.controller.Sandbox.polygon.PolygonClient;
 import com.codzilla.backend.controller.Sandbox.polygon.PolygonProblem;
 import com.codzilla.backend.controller.Sandbox.problem.Problem;
+import com.codzilla.backend.controller.Sandbox.problem.ProblemController;
 import com.codzilla.backend.controller.Sandbox.problem.ProblemRepository;
+import com.codzilla.backend.controller.Sandbox.problem.ProblemService;
 import com.codzilla.backend.controller.Sandbox.submission.Submission;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -15,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,28 +33,16 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-        properties = {
-                "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1",
-                "spring.datasource.driver-class-name=org.h2.Driver",
-                "spring.datasource.username=sa",
-                "spring.datasource.password=",
-                "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
-                "spring.jpa.hibernate.ddl-auto=create-drop",
 
-                "app.s3.enabled=false",
-
-                "spring.autoconfigure.exclude=" +
-                        "org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration," +
-                        "org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration"
-        }
-)
 @AutoConfigureMockMvc(addFilters = false)
+@WebMvcTest(ProblemController.class)
 class ProblemIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    JWTUtils jwtUtils;
 
     @MockitoBean
     private com.codzilla.backend.controller.Sandbox.problem.ProblemTestRepository problemTestRepository;
@@ -58,6 +52,7 @@ class ProblemIntegrationTest {
 
     @MockitoBean
     private ProblemRepository problemRepository;
+
     @MockitoBean
     private S3Initialization s3Initialization;
 
@@ -69,11 +64,18 @@ class ProblemIntegrationTest {
 
     @MockitoBean
     private UserRepository userRepository;
+
     @MockitoBean
     private com.codzilla.backend.controller.Sandbox.polygon.PolygonProblemService polygonProblemService;
 
     @MockitoBean
     private com.codzilla.backend.controller.Sandbox.submission.SubmissionRepository submissionRepository;
+
+    @MockitoBean
+    UserService userService;
+
+    @MockitoBean
+    ProblemService problemService;
 
     @Test
     void fullFlow_createAndSubmit() throws Exception {
