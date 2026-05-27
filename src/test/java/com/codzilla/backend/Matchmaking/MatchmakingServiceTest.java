@@ -138,7 +138,7 @@ class MatchmakingServiceTest {
 
         var status = service.queueStatus(userId);
 
-        assertThat(status.status()).isEqualTo("WAITING");
+        assertThat(status.status()).isEqualTo(MatchStatus.WAITING);
         assertThat(status.queueSize()).isEqualTo(1);
         assertThat(status.waitingSeconds()).isGreaterThanOrEqualTo(5);
     }
@@ -148,6 +148,6 @@ class MatchmakingServiceTest {
     void queueStatus_playerNotInQueue_returnsNotInQueue() {
         var status = service.queueStatus(UUID.randomUUID());
 
-        assertThat(status.status()).isEqualTo("NOT_IN_QUEUE");
+        assertThat(status.status()).isEqualTo(MatchStatus.NOT_IN_QUEUE);
     }
 }

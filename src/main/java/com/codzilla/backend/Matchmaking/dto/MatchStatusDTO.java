@@ -1,7 +1,9 @@
 package com.codzilla.backend.Matchmaking.dto;
 
+import com.codzilla.backend.Matchmaking.MatchStatus;
+
 public record MatchStatusDTO(
-        String status,
+        MatchStatus status,
         int queueSize,
         long waitingSeconds
 ) {}

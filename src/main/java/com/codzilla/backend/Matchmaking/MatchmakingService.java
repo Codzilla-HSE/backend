@@ -1,7 +1,6 @@
 package com.codzilla.backend.Matchmaking;
 
 import com.codzilla.backend.Authentication.Exceptions.UserNotFoundException;
-import com.codzilla.backend.Matchmaking.dto.MatchStatusDTO;
 import com.codzilla.backend.User.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,13 +36,13 @@ public class MatchmakingService {
         log.info("[MM] User {} left queue. Size: {}", userId, queue.size());
     }
 
-    public MatchStatusDTO queueStatus(UUID userId) {
+    public MatchStatusResult queueStatus(UUID userId) {
         QueueEntry entry = queue.get(userId);
         if (entry == null) {
-            return new MatchStatusDTO("NOT_IN_QUEUE", queue.size(), 0);
+            return new MatchStatusResult(MatchStatus.NOT_IN_QUEUE, queue.size(), 0);
         }
         long waiting = Instant.now().getEpochSecond() - entry.joinedAt().getEpochSecond();
-        return new MatchStatusDTO("WAITING", queue.size(), waiting);
+        return new MatchStatusResult(MatchStatus.WAITING, queue.size(), waiting);
     }
 
     public synchronized void runMatchmaking() {

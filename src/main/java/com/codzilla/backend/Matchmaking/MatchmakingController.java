@@ -42,6 +42,11 @@ public class MatchmakingController {
 
     @GetMapping("/queue/status")
     public ResponseEntity<MatchStatusDTO> queueStatus(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(matchmakingService.queueStatus(resolveUserId(user)));
+        MatchStatusResult result = matchmakingService.queueStatus(resolveUserId(user));
+        return ResponseEntity.ok(new MatchStatusDTO(
+                result.status(),
+                result.queueSize(),
+                result.waitingSeconds()
+        ));
     }
 }
