@@ -42,6 +42,7 @@ public class MatchmakingService {
 
     public void leaveQueue(UUID userId) {
         queue.remove(userId);
+        removeEmitter(userId);
         log.info("[MM] User {} left queue. Size: {}", userId, queue.size());
         broadcastQueueSize();
     }
