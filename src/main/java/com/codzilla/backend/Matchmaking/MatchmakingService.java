@@ -56,16 +56,29 @@ public class MatchmakingService {
         return new MatchStatusResult(MatchStatus.WAITING, queue.size(), waiting);
     }
 
+    private void removeIfCurrent(UUID userId, SseEmitter expected) {
+        emitters.remove(userId, expected);
+    }
+
     public SseEmitter subscribe(UUID userId) {
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
 
-        emitter.onCompletion(() -> emitters.remove(userId));
+        SseEmitter previous = emitters.remove(userId);
+        if (previous != null) {
+            try {
+                previous.complete();
+            } catch (Exception e) {
+                log.warn("[MM] Failed to complete previous emitter for {}: {}", userId, e.getMessage());
+            }
+        }
+
+        emitter.onCompletion(() -> removeIfCurrent(userId, emitter));
         emitter.onTimeout(() -> {
-            emitters.remove(userId);
+            removeIfCurrent(userId, emitter);
             emitter.complete();
         });
+        emitter.onError((e) -> removeIfCurrent(userId, emitter));
 
-        emitter.onError((e) -> emitters.remove(userId));
         emitters.put(userId, emitter);
 
         sendToEmitter(emitter, "queue-size", String.valueOf(queue.size()));
@@ -80,7 +93,7 @@ public class MatchmakingService {
         }
     }
 
-    private void broadcastQueueSize() {
+    public void broadcastQueueSize() {
         String size = String.valueOf(queue.size());
         emitters.forEach((userId, emitter) ->
                 sendToEmitter(emitter, "queue-size", size));
