@@ -1,5 +1,6 @@
 package com.codzilla.backend.Sandbox.controller;
 
+import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserService;
 import com.codzilla.backend.controller.Sandbox.problem.*;
@@ -41,6 +42,9 @@ class ProblemControllerFileTest {
 
     @MockitoBean
     private ProblemService problemService;
+
+    @MockitoBean
+    private MatchService matchService;
 
     @MockitoBean
     private UserService userService;

@@ -1,5 +1,6 @@
 package com.codzilla.backend.Sandbox.controller;
 
+import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserService;
 import com.codzilla.backend.controller.Sandbox.problem.*;
@@ -31,6 +32,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 )
 @AutoConfigureMockMvc(addFilters = false)
 class ProblemControllerTest {
+
+    @MockitoBean
+    private MatchService matchService;
 
     @MockitoBean
     private com.codzilla.backend.Authentication.JWTRequestFilter.JWTRequestFilter jwtRequestFilter;

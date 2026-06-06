@@ -2,6 +2,7 @@ package com.codzilla.backend.Sandbox.integration;
 
 import com.codzilla.backend.Authentication.JWTRequestFilter.JWTRequestFilter;
 import com.codzilla.backend.Authentication.JWTUtils.JWTUtils;
+import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import com.codzilla.backend.S3.S3Initialization;
 import com.codzilla.backend.User.UserRepository;
 
@@ -52,6 +53,9 @@ class ProblemIntegrationTest {
 
     @MockitoBean
     private ProblemRepository problemRepository;
+
+    @MockitoBean
+    private MatchService matchService;
 
     @MockitoBean
     private S3Initialization s3Initialization;
