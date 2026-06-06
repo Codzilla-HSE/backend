@@ -24,11 +24,7 @@ public class SqlServiceClient {
                 .build();
     }
 
-    // ──────────────────────────────────────────────
-    // Отправить решение SQL-задачи
-    // Возвращает id посылки в SqlService
-    // ──────────────────────────────────────────────
-
+    // Отправить SQL-решение → вернуть id посылки в SqlService
     public Long submitSolution(Long taskId, String userId, String query) {
         try {
             SubmitRequest request = new SubmitRequest();
@@ -37,7 +33,6 @@ public class SqlServiceClient {
             request.setQuery(query);
 
             String body = objectMapper.writeValueAsString(request);
-
             String raw = restClient.post()
                     .uri("/sqlservice/submissions")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -46,33 +41,27 @@ public class SqlServiceClient {
                     .body(String.class);
 
             SubmitResponse response = objectMapper.readValue(raw, SubmitResponse.class);
-            log.info("SqlService accepted submission, id={}", response.getId());
+            log.info("SqlService accepted submission id={}", response.getId());
             return response.getId();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to submit SQL solution to SqlService", e);
+            throw new RuntimeException("Failed to submit SQL solution", e);
         }
     }
 
-    // ──────────────────────────────────────────────
-    // Получить статус посылки
-    // ──────────────────────────────────────────────
-
+    // Получить статус SQL-посылки
     public SubmissionStatus getSubmissionStatus(Long submissionId) {
         try {
             String raw = restClient.get()
                     .uri("/sqlservice/submissions/" + submissionId)
                     .retrieve()
                     .body(String.class);
-
             return objectMapper.readValue(raw, SubmissionStatus.class);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to get SQL submission status: " + submissionId, e);
+            throw new RuntimeException("Failed to get SQL submission " + submissionId, e);
         }
     }
 
-    // ──────────────────────────────────────────────
-    // DTOs
-    // ──────────────────────────────────────────────
+    // ── DTOs ──────────────────────────────────────────────────────
 
     @Data
     public static class SubmitRequest {
@@ -91,7 +80,7 @@ public class SqlServiceClient {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SubmissionStatus {
         private Long id;
-        private String status;   // PENDING / ACCEPTED / WRONG_ANSWER / ERROR
+        private String status;
         private String verdict;
         private Long executionTimeMs;
     }

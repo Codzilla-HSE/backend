@@ -12,10 +12,12 @@ public class Problem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ID задачи в Artefactik0 (для ALGO) или SqlService (для SQL)
-    private Long externalId;
-
     private String name;
+
+    // ID задачи во внешнем сервисе:
+    // ALGO → id в Artefactik0
+    // SQL  → id задачи в SqlService
+    private Long externalId;
 
     @Enumerated(EnumType.STRING)
     private ProblemType type;

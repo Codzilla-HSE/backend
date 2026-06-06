@@ -26,12 +26,7 @@ public class ProblemService {
     private final SubmissionRepository submissionRepository;
     private final SubmissionTestRepository submissionTestRepository;
 
-    // ──────────────────────────────────────────────
-    // Создать задачу
-    // Для ALGO — регистрируем в Artefactik0
-    // Для SQL  — externalId приходит снаружи (задача уже создана в SqlService)
-    // ──────────────────────────────────────────────
-
+    // Создать ALGO-задачу: регистрируем в Artefactik0, сохраняем externalId
     public Problem createAlgoProblem(CreateAlgoProblemRequest request) {
         Artefactik0Client.CreateProblemRequest artefaktRequest =
                 new Artefactik0Client.CreateProblemRequest();
@@ -49,25 +44,20 @@ public class ProblemService {
         problem.setExternalId(externalId);
         problem.setType(Problem.ProblemType.ALGO);
         problem.setLevel(request.getLevel());
-
         return problemRepository.save(problem);
     }
 
+    // Зарегистрировать SQL-задачу: задача уже есть в SqlService, просто сохраняем ссылку
     public Problem registerSqlProblem(RegisterSqlProblemRequest request) {
-        // Задача уже создана в SqlService — просто регистрируем у себя
         Problem problem = new Problem();
         problem.setName(request.getName());
         problem.setExternalId(request.getSqlServiceTaskId());
         problem.setType(Problem.ProblemType.SQL);
         problem.setLevel(request.getLevel());
-
         return problemRepository.save(problem);
     }
 
-    // ──────────────────────────────────────────────
     // Отправить решение — ветвление по типу задачи
-    // ──────────────────────────────────────────────
-
     public String submitSolution(UUID userId, Long problemId, String sourceCode, int languageId) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new RuntimeException("Problem not found: " + problemId));
@@ -78,15 +68,14 @@ public class ProblemService {
         };
     }
 
-    // ──────────────────────────────────────────────
-    // ALGO: берём тесты из Artefactik0, шлём в Judge0
-    // ──────────────────────────────────────────────
-
+    // ALGO: тесты из Artefactik0 → каждый тест в Judge0
     private String submitAlgo(UUID userId, Problem problem, String sourceCode, int languageId) {
-        List<Artefactik0Client.TestCase> tests = artefactik0Client.getTests(problem.getExternalId());
+        List<Artefactik0Client.TestCase> tests =
+                artefactik0Client.getTests(problem.getExternalId());
 
         if (tests == null || tests.isEmpty()) {
-            throw new RuntimeException("No tests found in Artefactik0 for problem " + problem.getId());
+            throw new RuntimeException(
+                    "No tests in Artefactik0 for problem " + problem.getId());
         }
 
         Submission sub = new Submission();
@@ -100,8 +89,7 @@ public class ProblemService {
             Artefactik0Client.TestCase test = tests.get(i);
 
             String token = judge0Client.submitAsync(
-                    sourceCode, languageId, test.getInput(), null
-            );
+                    sourceCode, languageId, test.getInput(), null);
 
             if (token == null) {
                 throw new RuntimeException("Judge0 unavailable");
@@ -111,30 +99,26 @@ public class ProblemService {
             subTest.setSubmissionId(saved.getId());
             subTest.setTestIndex(i + 1);
             subTest.setJudge0Token(token);
-            subTest.setExpectedOutput(test.getOutput() == null ? "" : test.getOutput().trim());
+            subTest.setExpectedOutput(
+                    test.getOutput() == null ? "" : test.getOutput().trim());
             subTest.setStatus(SubmissionTest.Status.IN_QUEUE);
             submissionTestRepository.save(subTest);
         }
 
-        log.info("ALGO submission {} created for problem {} with {} tests",
+        log.info("ALGO submission {} for problem {} with {} tests",
                 saved.getId(), problem.getId(), tests.size());
         return saved.getId().toString();
     }
 
-    // ──────────────────────────────────────────────
-    // SQL: делегируем полностью в SqlService
-    // Возвращаем sqlServiceSubmissionId как строку
-    // ──────────────────────────────────────────────
-
+    // SQL: полностью делегируем в SqlService
     private String submitSql(UUID userId, Problem problem, String query) {
         Long sqlSubmissionId = sqlServiceClient.submitSolution(
                 problem.getExternalId(),
                 userId.toString(),
                 query
         );
-
-        log.info("SQL submission delegated to SqlService, submissionId={}", sqlSubmissionId);
-        // Возвращаем "sql:<id>" чтобы фронт знал куда опрашивать статус
+        log.info("SQL submission delegated, sqlSubmissionId={}", sqlSubmissionId);
+        // Префикс "sql:" — чтобы /status знал куда идти
         return "sql:" + sqlSubmissionId;
     }
 }
