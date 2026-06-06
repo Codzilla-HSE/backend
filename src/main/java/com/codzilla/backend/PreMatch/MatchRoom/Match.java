@@ -2,15 +2,22 @@ package com.codzilla.backend.PreMatch.MatchRoom;
 
 import com.codzilla.backend.PreMatch.DraftSession.DraftSession;
 import com.codzilla.backend.PreMatch.model.Category;
+import com.codzilla.backend.PreMatch.model.Option;
+import com.codzilla.backend.PreMatch.model.OptionStatusDTO;
+import com.codzilla.backend.controller.Sandbox.problem.Problem;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Predicate;
 
+@Slf4j
 @Entity
 @Getter
 @Setter
@@ -34,15 +41,25 @@ public class Match {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "options", columnDefinition = "jsonb")
-    HashMap<Category, String> options = new HashMap<>();
+    Map<Category, String> options;
 
     Status status;
 
-    void setOptionsOfDraftSession(DraftSession draftSession) {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "problem_id")
+    private Problem problem;
 
-        for (var option : draftSession.getRemainOptions().entrySet()) {
-            options.put(option.getKey(), option.getValue().stream().findFirst().get());
+    void setOptionsOfDraftSession(DraftSession draftSession) {
+        Map<Category, String> new_options = new HashMap<>();
+        for (var categoryDTO : draftSession.getOptionsStates()) {
+            new_options.put(categoryDTO.getCategory(),
+                        categoryDTO.getOptions().stream()
+                                   .filter(Predicate.not(OptionStatusDTO::isBanned)).findFirst()
+                                   .get().getOption()
+            );
         }
+        options = new_options;
+        log.info("Set options for match: {}", options);
     }
 
     Match(UUID firstUserId, UUID secondUserId) {
@@ -50,5 +67,6 @@ public class Match {
         this.secondUserId = secondUserId;
     }
 
-    public Match() {}
+    public Match() {
+    }
 }

@@ -7,6 +7,7 @@ import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import com.codzilla.backend.PreMatch.events.DraftSessionFinishedEvent;
 import com.codzilla.backend.PreMatch.events.DraftSessionUpdatedEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -36,9 +37,9 @@ public class MatchDeliveryListener {
     }
 
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
     public void handleDraftSessionFinished(DraftSessionFinishedEvent event) {
-        matchService.setOptionsOfDraftSession(
+        matchService.setUpMatch(
                 event.getDraftSession().getId(),
                 event.getDraftSession()
         );

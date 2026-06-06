@@ -1,5 +1,9 @@
 package com.codzilla.backend.controller.Sandbox.problem;
 
+import com.codzilla.backend.PreMatch.MatchRoom.Match;
+import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
+import com.codzilla.backend.PreMatch.model.Category;
+import com.codzilla.backend.PreMatch.model.Language;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserRepository;
 import com.codzilla.backend.User.UserService;
@@ -28,6 +32,7 @@ public class ProblemController {
     private final ProblemService problemService;
     private final UserService userService;
     private final SubmissionRepository submissionRepository;
+    private final MatchService matchService;
 
     @PostMapping("/create")
     public ResponseEntity<Problem> createProblem(@RequestBody CreateProblemRequest request) {
@@ -38,8 +43,7 @@ public class ProblemController {
     @PostMapping(value = "submit/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> submitFile(
             @AuthenticationPrincipal User user,
-            @RequestParam Long problemId,
-            @RequestParam int languageId,
+            @RequestParam UUID matchId,
             @RequestParam MultipartFile file
     ) throws IOException {
         String sourceCode = new String(
@@ -47,12 +51,14 @@ public class ProblemController {
                 StandardCharsets.UTF_8
         );
         log.info("File content: {}", sourceCode);
-        UUID userId = userService.getIdByEmail(user.getEmail());
+        UUID userId = user.getId();
+        Match match = matchService.getMatchById(matchId);
+        log.info("Submit of match: {}", match);
         String result = problemService.submitSolution(
                 userId,
-                problemId,
+                match.getProblem().getId(),
                 sourceCode,
-                languageId
+                Enum.valueOf(Language.class, match.getOptions().get(Category.Language)).getValue()
         );
         return ResponseEntity.ok(result);
     }

@@ -1,7 +1,5 @@
 package com.codzilla.backend.PreMatch.DraftSession;
 
-import com.codzilla.backend.PreMatch.DTO.DraftSessionResponseDTO;
-import com.codzilla.backend.PreMatch.DTO.WebSocketDTO;
 import com.codzilla.backend.PreMatch.MatchSettings;
 import com.codzilla.backend.PreMatch.events.DraftSessionFinishedEvent;
 import com.codzilla.backend.PreMatch.events.DraftSessionUpdatedEvent;
@@ -12,7 +10,6 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -31,16 +28,18 @@ public class DraftSessionService {
                                @Qualifier("threadPoolTaskScheduler") TaskScheduler taskScheduler,
                                TransactionTemplate transactionTemplate,
                                MatchSettings matchSettings,
-                               ApplicationEventPublisher eventPublisher
+                               ApplicationEventPublisher eventPublisher,
+                               @Qualifier("categorySequence") Map<String, Category> categorySequence
     ) {
         this.draftSessionRepository = draftSessionRepository;
         this.taskScheduler = taskScheduler;
         this.transactionTemplate = transactionTemplate;
         this.matchSettings = matchSettings;
         this.eventPublisher = eventPublisher;
+        this.categorySequence = categorySequence;
     }
 
-
+    private final Map<String, Category> categorySequence;
     private final DraftSessionRepository draftSessionRepository;
     private final TaskScheduler taskScheduler;
     private final TransactionTemplate transactionTemplate;
@@ -62,66 +61,23 @@ public class DraftSessionService {
             throw new DraftSessionException(DraftSessionException.DraftErrorType.NOT_YOUR_TURN);
         }
 
-        banOption(
-                draftSession,
-                optionEntity
+        draftSession.banOption(
+                optionEntity.getCategory(),
+                optionEntity.getBanObject(),
+                categorySequence
         );
+        cancelTimer(draftSession.getId());
 
-        if (draftSession.getStatus().equals(DraftSession.Status.PICKING)) {
+        if (draftSession.getStatus() == DraftSession.Status.FINISHED) {
+            eventPublisher.publishEvent(new DraftSessionFinishedEvent(draftSession));
+            draftSessionRepository.deleteById(draftSessionId);
+        } else {
+            eventPublisher.publishEvent(new DraftSessionUpdatedEvent(draftSession));
             startTimer(draftSessionId);
             draftSessionRepository.save(draftSession);
-        } else if (draftSession.getStatus().equals(DraftSession.Status.FINISHED)) {
-            draftSessionRepository.deleteById(draftSessionId);
         }
 
         return draftSession;
-    }
-
-    private void banOption(DraftSession draftSession, OptionEntity optionEntity) {
-
-
-        boolean isOptionExists =
-                Arrays.stream(optionEntity.getCategory().getEnumClass().getEnumConstants())
-                      .anyMatch(
-                              anEnum -> anEnum.name().equals(optionEntity.getBanObject())
-                      );
-
-
-        if (!isOptionExists) {
-            throw new DraftSessionException(DraftSessionException.DraftErrorType.OPTION_DO_NOT_EXISTS);
-        }
-
-        long optionsOfCategoryRemain =
-                draftSession.remainOptions.get(optionEntity.getCategory()).size();
-
-        if (optionsOfCategoryRemain == 1) {
-            throw new DraftSessionException(DraftSessionException.DraftErrorType.CAN_NOT_BAN_LAST_OPTION);
-        }
-
-        if (!draftSession.remainOptions.get(optionEntity.getCategory())
-                                       .contains(optionEntity.getBanObject())) {
-            throw new DraftSessionException(DraftSessionException.DraftErrorType.OPTION_ALREADY_BANNED);
-        }
-        cancelTimer(draftSession.getId());
-        draftSession.remainOptions.get(optionEntity.getCategory())
-                                  .remove(optionEntity.getBanObject());
-        log.info(
-                "BAN OPTION: {}",
-                optionEntity
-        );
-        draftSession.setFirstUserMove(!draftSession.isFirstUserMove());
-
-        boolean isDraftSessionFinished =
-                draftSession.remainOptions.values().stream().allMatch(
-                        set -> set.size() == 1
-                );
-
-        if (isDraftSessionFinished) {
-            draftSession.setStatus(DraftSession.Status.FINISHED);
-            eventPublisher.publishEvent(new DraftSessionFinishedEvent(draftSession));
-        } else {
-            eventPublisher.publishEvent(new DraftSessionUpdatedEvent(draftSession));
-        }
     }
 
     private void startTimer(UUID draftSessionId) {
@@ -164,31 +120,16 @@ public class DraftSessionService {
             return;
         }
 
-        List<OptionEntity> allOptions = draftSession.remainOptions.entrySet().stream()
-                                                                  .flatMap(entry -> entry.getValue()
-                                                                                         .stream()
-                                                                                         .map(value -> new OptionEntity(
-                                                                                                 entry.getKey(),
-                                                                                                 value
-                                                                                         )))
-                                                                  .toList();
+        draftSession.makeRandomBan(categorySequence);
+        cancelTimer(draftSession.getId());
 
-        while (true) {
-            int randomIndex = ThreadLocalRandom.current().nextInt(allOptions.size());
-            try {
-                banOption(
-                        draftSession,
-                        allOptions.get(randomIndex)
-                );
-                break;
-            } catch (RuntimeException _) {
-            }
-        }
-
-
-        draftSessionRepository.save(draftSession);
-        if (draftSession.getStatus().equals(DraftSession.Status.PICKING)) {
+        if (draftSession.getStatus() == DraftSession.Status.FINISHED) {
+            eventPublisher.publishEvent(new DraftSessionFinishedEvent(draftSession));
+            draftSessionRepository.deleteById(draftSessionId);
+        } else {
+            eventPublisher.publishEvent(new DraftSessionUpdatedEvent(draftSession));
             startTimer(draftSessionId);
+            draftSessionRepository.save(draftSession);
         }
     }
 
@@ -200,7 +141,8 @@ public class DraftSessionService {
         DraftSession draftSession = new DraftSession(
                 matchId,
                 firstUserId,
-                secondUserId
+                secondUserId,
+                Category.Language
         );
         draftSessionRepository.save(draftSession);
         startTimer(draftSession.getId());

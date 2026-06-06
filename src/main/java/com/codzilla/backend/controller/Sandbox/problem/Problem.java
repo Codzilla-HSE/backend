@@ -1,5 +1,6 @@
 package com.codzilla.backend.controller.Sandbox.problem;
 
+import com.codzilla.backend.PreMatch.model.Option;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -20,11 +21,11 @@ public class Problem {
     @Enumerated(EnumType.STRING)
     private ProblemLevel level;
 
-    public enum ProblemType {
+    public enum ProblemType implements Option {
         ALGORITHM, DATA_STRUCTURES, MATH
     }
 
-    public enum ProblemLevel {
+    public enum ProblemLevel implements Option {
         EASY, MEDIUM, HARD
     }
 }
