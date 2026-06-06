@@ -3,10 +3,12 @@ package com.codzilla.backend.Matchmaking;
 import com.codzilla.backend.Matchmaking.dto.MatchStatusDTO;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserRepository;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.UUID;
 
@@ -48,5 +50,11 @@ public class MatchmakingController {
                 result.queueSize(),
                 result.waitingSeconds()
         ));
+    }
+
+    @GetMapping(value = "/queue/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamQueue(@AuthenticationPrincipal User user) {
+        UUID userId = resolveUserId(user);
+        return matchmakingService.subscribe(userId);
     }
 }

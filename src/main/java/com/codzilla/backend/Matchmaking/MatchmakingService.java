@@ -2,9 +2,12 @@ package com.codzilla.backend.Matchmaking;
 
 import com.codzilla.backend.Authentication.Exceptions.UserNotFoundException;
 import com.codzilla.backend.User.UserRepository;
+import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,10 +20,15 @@ public class MatchmakingService {
     public static final int WAVE_STEP   = 25;
     public static final int MAX_WINDOW  = 400;
 
-    private final ConcurrentHashMap<UUID, QueueEntry> queue = new ConcurrentHashMap<>();
-    private final UserRepository userRepository;
+    private static final long SSE_TIMEOUT = 10 * 60 * 1000L;
 
-    public MatchmakingService(UserRepository userRepository) {
+    private final ConcurrentHashMap<UUID, QueueEntry> queue = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final UserRepository userRepository;
+    private final MatchService matchService;
+
+    public MatchmakingService(UserRepository userRepository, MatchService matchService) {
+        this.matchService = matchService;
         this.userRepository = userRepository;
     }
 
@@ -29,11 +37,14 @@ public class MatchmakingService {
                 .orElseThrow(UserNotFoundException::new);
         queue.put(userId, new QueueEntry(userId, user.getRating(), Instant.now()));
         log.info("[MM] User {} (rating={}) entered queue. Size: {}", userId, user.getRating(), queue.size());
+        broadcastQueueSize();
     }
 
     public void leaveQueue(UUID userId) {
         queue.remove(userId);
+        removeEmitter(userId);
         log.info("[MM] User {} left queue. Size: {}", userId, queue.size());
+        broadcastQueueSize();
     }
 
     public MatchStatusResult queueStatus(UUID userId) {
@@ -43,6 +54,68 @@ public class MatchmakingService {
         }
         long waiting = Instant.now().getEpochSecond() - entry.joinedAt().getEpochSecond();
         return new MatchStatusResult(MatchStatus.WAITING, queue.size(), waiting);
+    }
+
+    private void removeIfCurrent(UUID userId, SseEmitter expected) {
+        emitters.remove(userId, expected);
+    }
+
+    public SseEmitter subscribe(UUID userId) {
+        SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
+
+        SseEmitter previous = emitters.remove(userId);
+        if (previous != null) {
+            try {
+                previous.complete();
+            } catch (Exception e) {
+                log.warn("[MM] Failed to complete previous emitter for {}: {}", userId, e.getMessage());
+            }
+        }
+
+        emitter.onCompletion(() -> removeIfCurrent(userId, emitter));
+        emitter.onTimeout(() -> {
+            removeIfCurrent(userId, emitter);
+            emitter.complete();
+        });
+        emitter.onError((e) -> removeIfCurrent(userId, emitter));
+
+        emitters.put(userId, emitter);
+
+        sendToEmitter(emitter, "queue-size", String.valueOf(queue.size()));
+
+        return emitter;
+    }
+
+    private void removeEmitter(UUID userId) {
+        SseEmitter emitter = emitters.remove(userId);
+        if (emitter != null) {
+            emitter.complete();
+        }
+    }
+
+    public void broadcastQueueSize() {
+        String size = String.valueOf(queue.size());
+        emitters.forEach((userId, emitter) ->
+                sendToEmitter(emitter, "queue-size", size));
+    }
+
+    private void broadcastMatchFound(UUID userA, UUID userB, UUID sessionId) {
+        String payload = sessionId.toString();
+        for (UUID userId : List.of(userA, userB)) {
+            SseEmitter emitter = emitters.remove(userId);
+            if (emitter != null) {
+                sendToEmitter(emitter, "match-found", payload);
+                emitter.complete();
+            }
+        }
+    }
+
+    private void sendToEmitter(SseEmitter emitter, String eventName, String data) {
+        try {
+            emitter.send(SseEmitter.event().name(eventName).data(data));
+        } catch (IOException e) {
+            log.warn("[MM] Failed to send SSE event '{}': {}", eventName, e.getMessage());
+        }
     }
 
     public synchronized void runMatchmaking() {
@@ -86,7 +159,12 @@ public class MatchmakingService {
             log.warn("[MM] Pairing cancelled: one of users left queue ({} or {})", a, b);
             return;
         }
-        // TODO implement create session call
-        log.info("[MM] Paired: {} vs {}", a, b);
+
+        UUID userA = removedA.userId();
+        UUID userB = removedB.userId();
+        UUID sessionId = matchService.startMatch(userA, userB);
+        broadcastQueueSize();
+        broadcastMatchFound(userA, userB, sessionId);
+        log.info("[MM] Paired: {} vs {} -> session {}", a, b, sessionId);
     }
 }
