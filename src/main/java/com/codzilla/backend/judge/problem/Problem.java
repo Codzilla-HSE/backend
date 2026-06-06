@@ -1,4 +1,4 @@
-package com.codzilla.backend.controller.Sandbox.problem;
+package com.codzilla.backend.judge.problem;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -12,7 +12,10 @@ public class Problem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String polygonToken;
+    // ID задачи в Artefactik0 (для ALGO) или SqlService (для SQL)
+    private Long externalId;
+
+    private String name;
 
     @Enumerated(EnumType.STRING)
     private ProblemType type;
@@ -21,7 +24,7 @@ public class Problem {
     private ProblemLevel level;
 
     public enum ProblemType {
-        ALGORITHM, DATA_STRUCTURES, MATH
+        ALGO, SQL
     }
 
     public enum ProblemLevel {

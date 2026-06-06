@@ -1,5 +1,5 @@
 
-package com.codzilla.backend.controller.Sandbox.submission;
+package com.codzilla.backend.judge.submission;
 
 import jakarta.persistence.*;
 import lombok.Data;

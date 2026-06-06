@@ -1,12 +1,10 @@
-package com.codzilla.backend.controller.Sandbox.submission;
+package com.codzilla.backend.judge.submission;
 
-import com.codzilla.backend.controller.Sandbox.judge0.Judge0Client;
+import com.codzilla.backend.judge.judge0.Judge0Client;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import com.codzilla.backend.controller.Sandbox.submission.SubmissionUpdatedEvent; 
-
-import org.springframework.context.ApplicationEventPublisher; 
+import org.springframework.context.ApplicationEventPublisher;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
