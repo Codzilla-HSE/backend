@@ -23,16 +23,13 @@ import java.util.UUID;
 public class DraftSessionController {
 
     public DraftSessionController(SimpMessagingTemplate messagingTemplate,
-                                  DraftSessionService draftSessionService,
-                                  MatchSettings matchSettings) {
+                                  DraftSessionService draftSessionService) {
         this.draftSessionService = draftSessionService;
         this.messagingTemplate = messagingTemplate;
-        this.matchSettings = matchSettings;
     }
 
     DraftSessionService draftSessionService;
     SimpMessagingTemplate messagingTemplate;
-    private final MatchSettings matchSettings;
 
     @MessageMapping("{matchId}/ban")
     void handleBanRequest(
@@ -41,12 +38,12 @@ public class DraftSessionController {
             @Payload OptionEntity optionEntity) {
         User user = (User) auth.getPrincipal();
         assert user != null;
-        var draftSession = draftSessionService.processBan(
+        assert optionEntity != null;
+        draftSessionService.processBan(
                 user,
                 UUID.fromString(matchId),
                 optionEntity
         );
-
     }
 
     @SubscribeMapping("/match/{matchId}")

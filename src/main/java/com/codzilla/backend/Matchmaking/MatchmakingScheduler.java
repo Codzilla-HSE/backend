@@ -18,4 +18,9 @@ public class MatchmakingScheduler {
     public void runMatchmaking() {
         matchmakingService.runMatchmaking();
     }
+
+    @Scheduled(fixedDelay = 3000)
+    public void broadcastQueueState() {
+        matchmakingService.broadcastQueueSize();
+    }
 }

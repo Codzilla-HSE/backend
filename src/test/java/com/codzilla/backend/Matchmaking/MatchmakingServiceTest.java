@@ -2,6 +2,7 @@ package com.codzilla.backend.Matchmaking;
 
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserRepository;
+import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ class MatchmakingServiceTest {
 
     @Mock
     private UserRepository userRepository;
+    private MatchService matchService;
 
     private MatchmakingService service;
 
@@ -31,7 +33,7 @@ class MatchmakingServiceTest {
     @BeforeEach
     @SuppressWarnings("unchecked")
     void setUp() throws Exception {
-        service = new MatchmakingService(userRepository);
+        service = new MatchmakingService(userRepository, matchService);
 
         Field queueField = MatchmakingService.class.getDeclaredField("queue");
         queueField.setAccessible(true);

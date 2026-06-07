@@ -1,5 +1,6 @@
 package com.codzilla.backend.judge.problem;
 
+import com.codzilla.backend.PreMatch.model.ProblemType;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -14,9 +15,6 @@ public class Problem {
 
     private String name;
 
-    // ID задачи во внешнем сервисе:
-    // ALGO → id в Artefactik0
-    // SQL  → id задачи в SqlService
     private Long externalId;
 
     @Enumerated(EnumType.STRING)
@@ -25,9 +23,6 @@ public class Problem {
     @Enumerated(EnumType.STRING)
     private ProblemLevel level;
 
-    public enum ProblemType {
-        ALGO, SQL
-    }
 
     public enum ProblemLevel {
         EASY, MEDIUM, HARD

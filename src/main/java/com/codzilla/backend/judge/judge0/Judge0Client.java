@@ -36,7 +36,7 @@ public class Judge0Client {
                     )
             );
 
-
+            log.info("Trying to get submission token...");
             String raw = restClient.post()
                                    .uri("/submissions?base64_encoded=false&fields=stdout")
                                    .contentType(MediaType.APPLICATION_JSON)
@@ -66,7 +66,7 @@ public class Judge0Client {
     public SubmissionResponse getSubmissionStatus(String token) {
         try {
             String raw = restClient.get()
-                                   .uri("/submissions/" + token + "?base64_encoded=false")
+                                   .uri("/submissions/" + token + "?base64_encoded=true")
                                    .retrieve()
                                    .body(String.class);
             log.info(

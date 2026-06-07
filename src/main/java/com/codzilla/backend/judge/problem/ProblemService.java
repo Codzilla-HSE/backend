@@ -1,5 +1,6 @@
 package com.codzilla.backend.judge.problem;
 
+import com.codzilla.backend.PreMatch.model.ProblemType;
 import com.codzilla.backend.judge.client.Artefactik0Client;
 import com.codzilla.backend.judge.client.SqlServiceClient;
 import com.codzilla.backend.judge.judge0.Judge0Client;
@@ -42,7 +43,7 @@ public class ProblemService {
         Problem problem = new Problem();
         problem.setName(request.getName());
         problem.setExternalId(externalId);
-        problem.setType(Problem.ProblemType.ALGO);
+        problem.setType(ProblemType.ALGORITHM);
         problem.setLevel(request.getLevel());
         return problemRepository.save(problem);
     }
@@ -52,7 +53,7 @@ public class ProblemService {
         Problem problem = new Problem();
         problem.setName(request.getName());
         problem.setExternalId(request.getSqlServiceTaskId());
-        problem.setType(Problem.ProblemType.SQL);
+        problem.setType(ProblemType.SQL);
         problem.setLevel(request.getLevel());
         return problemRepository.save(problem);
     }
@@ -63,8 +64,11 @@ public class ProblemService {
                 .orElseThrow(() -> new RuntimeException("Problem not found: " + problemId));
 
         return switch (problem.getType()) {
-            case ALGO -> submitAlgo(userId, problem, sourceCode, languageId);
+            case ALGORITHM -> submitAlgo(userId, problem, sourceCode, languageId);
             case SQL  -> submitSql(userId, problem, sourceCode);
+            //TODO ( не понятно что к чему )
+            case MATH -> null;
+            case DATA_STRUCTURES -> null;
         };
     }
 
