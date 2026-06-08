@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -42,10 +43,11 @@ public class LeaderboardService {
         if (total <= EDGE_SIZE) {
             bottomUsers = List.of();
         } else {
-            int bottomStart = Math.max(total - EDGE_SIZE, EDGE_SIZE);
-            int bottomCount = total - bottomStart;
-            bottomUsers = userRepository.findAllByOrderByRatingDescIdAsc(
-                    PageRequest.of(bottomStart / bottomCount, bottomCount));
+            int bottomCount = Math.min(EDGE_SIZE, total - EDGE_SIZE);
+            List<User> bottomAsc =
+                    userRepository.findAllByOrderByRatingAscIdDesc(PageRequest.of(0, bottomCount));
+            bottomUsers = new ArrayList<>(bottomAsc);
+            Collections.reverse(bottomUsers);
         }
 
         List<LeaderboardEntryDTO> top = mapWithRank(topUsers, 1, currentEmail);
