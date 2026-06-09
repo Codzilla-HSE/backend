@@ -64,7 +64,10 @@ public class MatchService {
             throw new RuntimeException("No SQL support!");
         }
 
-        return problemRepository.getRandomProblem(options.get(Category.ProblemType), options.get(Category.ProblemLevel));
+        String problemType = options.get(Category.ProblemType);   // "ALGORITHM", "MATH" и т.д.
+        String problemLevel = options.get(Category.ProblemLevel).toUpperCase(); // "Hard" → "HARD"
+
+        return problemRepository.getRandomProblem(problemType, problemLevel);
     }
 
     public Match getMatchById(UUID matchId) {

@@ -14,15 +14,13 @@ public class Problem {
     private Long id;
 
     private String name;
-
     private Long externalId;
 
     @Enumerated(EnumType.STRING)
     private ProblemType type;
 
     @Enumerated(EnumType.STRING)
-    private ProblemLevel level;
-
+    private ProblemLevel level = ProblemLevel.EASY;
 
     public enum ProblemLevel {
         EASY, MEDIUM, HARD
