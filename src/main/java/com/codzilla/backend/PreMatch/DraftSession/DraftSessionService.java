@@ -57,6 +57,8 @@ public class DraftSessionService {
                 draftSession.isFirstUserMove ? draftSession.getFirstUserId() :
                         draftSession.getSecondUserId();
 
+        log.info("Now user moving id : {}", nowUserMoving);
+        log.info("User trying to move id : {}", user.getId());
         if (!nowUserMoving.equals(user.getId())) {
             throw new DraftSessionException(DraftSessionException.DraftErrorType.NOT_YOUR_TURN);
         }

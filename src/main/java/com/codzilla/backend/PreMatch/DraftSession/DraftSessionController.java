@@ -39,6 +39,7 @@ public class DraftSessionController {
         User user = (User) auth.getPrincipal();
         assert user != null;
         assert optionEntity != null;
+        log.info("User email, id : {}, {}", user.getEmail(), user.getId());
         draftSessionService.processBan(
                 user,
                 UUID.fromString(matchId),
