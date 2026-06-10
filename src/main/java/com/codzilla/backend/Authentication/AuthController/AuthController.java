@@ -49,11 +49,12 @@ public class AuthController {
         User user = (User) auth.getPrincipal();
 
         var accessToken = jwtUtils.generateAccessToken(user);
+        log.info("Generated token: {}", accessToken);
         Cookie jwtCookie = new Cookie("jwt", accessToken);
         jwtCookie.setHttpOnly(true);
         jwtCookie.setSecure(false);
         jwtCookie.setPath("/");
-        jwtCookie.setMaxAge((int) settings.getRefreshTokenTtl().toSeconds());
+        jwtCookie.setMaxAge((int) settings.getAccessTokenTtl().toSeconds());
         response.addCookie(jwtCookie);
 
         var refreshToken = jwtUtils.generateRefreshToken(user);

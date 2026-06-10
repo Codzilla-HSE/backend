@@ -39,14 +39,15 @@ public class UserController {
     @Autowired
     UserService userService;
 
-    @GetMapping("/info")
+    @GetMapping("/me")
     ResponseEntity<?> getUserInfo(@AuthenticationPrincipal User user) {
         var responseUser = userService.getByEmail(user.getEmail());
 
         UserInfoResponseDTO info = new UserInfoResponseDTO(
                 responseUser.getNickname(),
                 responseUser.getEmail(),
-                responseUser.getRating()
+                responseUser.getRating(),
+                createPresignedGetUrl(s3Settings.bucketName(), "icons/" + user.getEmail())
         );
         return ResponseEntity.ok(info);
     }
@@ -68,7 +69,7 @@ public class UserController {
                             .bucket(s3Settings.bucketName())
                             .contentType(file.getContentType())
                                                .build(),
-                    RequestBody.fromBytes(file.getBytes())); // todo: make service
+                    RequestBody.fromBytes(file.getBytes()));
             return ResponseEntity.ok("Ok");
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Ошибка при чтении файла");
