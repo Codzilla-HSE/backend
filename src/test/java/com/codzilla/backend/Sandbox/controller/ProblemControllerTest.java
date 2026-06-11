@@ -13,6 +13,8 @@ import com.codzilla.backend.judge.problem.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+// Правильные импорты для Spring Boot 4
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -23,19 +25,11 @@ import java.util.*;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-// 1. Импортируем правильный метод user вместо authentication
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(
-        controllers = ProblemController.class,
-        excludeAutoConfiguration = {
-                org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration.class,
-                org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration.class,
-                org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration.class
-        }
-)
+@WebMvcTest(controllers = ProblemController.class)
+@AutoConfigureMockMvc(addFilters = false) // Полностью отключаем все фильтры безопасности
 class ProblemControllerTest {
 
     @MockitoBean
@@ -101,7 +95,6 @@ class ProblemControllerTest {
 
         when(problemService.createAlgoProblem(any())).thenReturn(problem);
 
-        // 2. Исправлен регистр "Easy" -> "EASY"
         String json = """
         {
             "name": "test-problem",
@@ -116,9 +109,7 @@ class ProblemControllerTest {
 
         mockMvc.perform(post("/problems/algo")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json)
-                        // 3. Добавляем аутентификацию, иначе контроллер упадет с NPE
-                        .with(user(mockUser)))
+                        .content(json))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("517936")));
     }
@@ -139,8 +130,7 @@ class ProblemControllerTest {
         mockMvc.perform(multipart("/problems/submit/file")
                         .file(file)
                         .param("matchId", matchId.toString())
-                        // 4. Заменяем сырой authentication на корректный user(mockUser)
-                        .with(user(mockUser)))
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("token-123")));
     }
