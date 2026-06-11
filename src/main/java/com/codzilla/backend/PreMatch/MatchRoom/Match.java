@@ -4,7 +4,7 @@ import com.codzilla.backend.PreMatch.DraftSession.DraftSession;
 import com.codzilla.backend.PreMatch.model.Category;
 import com.codzilla.backend.PreMatch.model.Option;
 import com.codzilla.backend.PreMatch.model.OptionStatusDTO;
-import com.codzilla.backend.controller.Sandbox.problem.Problem;
+import com.codzilla.backend.judge.problem.Problem;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

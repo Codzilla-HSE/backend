@@ -1,10 +1,10 @@
 package com.codzilla.backend.Sandbox;
 
-import com.codzilla.backend.S3.S3Repository;
-import com.codzilla.backend.controller.Sandbox.judge0.Judge0Client;
-import com.codzilla.backend.controller.Sandbox.polygon.*;
-import com.codzilla.backend.controller.Sandbox.problem.*;
-import com.codzilla.backend.controller.Sandbox.submission.*;
+import com.codzilla.backend.PreMatch.model.ProblemType;
+import com.codzilla.backend.judge.client.Artefactik0Client;
+import com.codzilla.backend.judge.judge0.Judge0Client;
+import com.codzilla.backend.judge.problem.*;
+import com.codzilla.backend.judge.submission.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,11 +23,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class SandboxTest {
-    @Mock
-    private ProblemTestRepository problemTestRepository;
-
-    @Mock
-    private SubmissionTestRepository submissionTestRepository;
 
     @Mock
     private ProblemRepository problemRepository;
@@ -35,76 +31,67 @@ public class SandboxTest {
     private Judge0Client judge0Client;
 
     @Mock
-    private PolygonProblemService polygonProblemService;
+    private Artefactik0Client artefactik0Client;
 
     @Mock
     private SubmissionRepository submissionRepository;
 
     @Mock
-    private PolygonClient polygonClient;
+    private SubmissionTestRepository submissionTestRepository;
 
     @Mock
-    private S3Repository s3Repository;
+    private com.codzilla.backend.judge.client.SqlServiceClient sqlServiceClient;
+
+    @Mock
+    private com.codzilla.backend.S3.S3Repository s3Repository;
 
     @InjectMocks
     private ProblemService problemService;
 
     private Problem problem;
-    private PolygonProblem.Test test;
+    private Artefactik0Client.TestCase testCase;
 
     @BeforeEach
     void setUp() {
         problem = new Problem();
         problem.setId(1L);
-        problem.setPolygonToken("test-problem-1");
-        problem.setType(Problem.ProblemType.ALGORITHM);
+        problem.setExternalId(1001L);        // бывший polygonToken
+        problem.setType(ProblemType.ALGORITHM);
         problem.setLevel(Problem.ProblemLevel.EASY);
 
-        test = new PolygonProblem.Test();
-        test.setIndex(1);
-        test.setInput("1 2");
-        test.setOutput("3");
+        testCase = new Artefactik0Client.TestCase();
+        testCase.setInput("1 2");
+        testCase.setOutput("3");
     }
 
-
     @Test
-    void createProblem_shouldSaveProblem() {
-        CreateProblemRequest request = new CreateProblemRequest();
+    void createAlgoProblem_shouldSaveProblem() {
+        CreateAlgoProblemRequest request = new CreateAlgoProblemRequest();
         request.setName("test-problem-1");
-        request.setType(Problem.ProblemType.ALGORITHM);
-        request.setLevel(Problem.ProblemLevel.EASY);
+        request.setTimeLimit(1000);
+        request.setMemoryLimit(256);
+        request.setStatement("...");
+        request.setGeneratorCode("...");
+        request.setInputs(Collections.singletonList("..."));
 
-        when(polygonClient.createProblem(anyString())).thenReturn("517936");
+        when(artefactik0Client.createProblem(any()))
+                .thenReturn(12345L);
         when(problemRepository.save(any()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        Problem result = problemService.createProblem(request);
+        Problem result = problemService.createAlgoProblem(request);
 
         assertThat(result).isNotNull();
-        assertThat(result.getPolygonToken()).isEqualTo("517936");
+        assertThat(result.getExternalId()).isEqualTo(12345L);
         verify(problemRepository, times(1)).save(any());
-    }
-
-    @Test
-    void createProblem_shouldCallPolygonAPI() {
-        when(polygonClient.createProblem(anyString())).thenReturn("517936");
-        when(problemRepository.save(any())).thenReturn(problem);
-
-        CreateProblemRequest request = new CreateProblemRequest();
-        request.setName("test-problem-1");
-        request.setType(Problem.ProblemType.ALGORITHM);
-        request.setLevel(Problem.ProblemLevel.EASY);
-
-        problemService.createProblem(request);
-
-        verify(polygonClient, times(1)).createProblem("test-problem-1");
     }
 
     @Test
     void submitSolution_shouldThrowWhenProblemNotFound() {
         when(problemRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> problemService.submitSolution(UUID.randomUUID(), UUID.randomUUID(),99L, "code", 71))
+        assertThatThrownBy(() ->
+                problemService.submitSolution(UUID.randomUUID(), null, 99L, "code", 71))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Problem not found");
     }
@@ -122,6 +109,7 @@ public class SandboxTest {
         assertThat(json).contains("\"expected_output\"");
         assertThat(json).contains("\"3\"");
     }
+
     @Test
     void submitSolution_shouldReturnToken() {
         Submission savedSub = new Submission();
@@ -129,14 +117,14 @@ public class SandboxTest {
         savedSub.setStatus(Submission.Status.IN_QUEUE);
 
         when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
-        when(problemTestRepository.findAllByProblemIdOrderByTestIndex(1L))
-                .thenReturn(List.of(toProblemTest(test, 1L)));
+        when(artefactik0Client.getTests(problem.getExternalId()))
+                .thenReturn(List.of(testCase));
         when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), isNull()))
                 .thenReturn("judge0-token-123");
         when(submissionRepository.save(any())).thenReturn(savedSub);
         when(submissionTestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        String result = problemService.submitSolution(UUID.randomUUID(), UUID.randomUUID(), 1L, "print(3)", 71);
+        String result = problemService.submitSolution(UUID.randomUUID(), null, 1L, "print(3)", 71);
 
         assertThat(result).isEqualTo("42");
     }
@@ -146,22 +134,20 @@ public class SandboxTest {
         Submission savedSub = new Submission();
         savedSub.setId(42L);
 
-        ProblemTest pt1 = toProblemTest(test, 1L);
-        ProblemTest pt2 = new ProblemTest();
-        pt2.setProblemId(1L);
-        pt2.setTestIndex(2);
-        pt2.setInput("5 10");
-        pt2.setExpectedOutput("15");
+        Artefactik0Client.TestCase test1 = testCase;
+        Artefactik0Client.TestCase test2 = new Artefactik0Client.TestCase();
+        test2.setInput("5 10");
+        test2.setOutput("15");
 
         when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
-        when(problemTestRepository.findAllByProblemIdOrderByTestIndex(1L))
-                .thenReturn(List.of(pt1, pt2));
+        when(artefactik0Client.getTests(problem.getExternalId()))
+                .thenReturn(List.of(test1, test2));
         when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), isNull()))
                 .thenReturn("token");
         when(submissionRepository.save(any())).thenReturn(savedSub);
         when(submissionTestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        problemService.submitSolution(UUID.randomUUID(), UUID.randomUUID(),1L, "print(3)", 71);
+        problemService.submitSolution(UUID.randomUUID(), null, 1L, "print(3)", 71);
 
         verify(judge0Client, times(2)).submitAsync(anyString(), anyInt(), anyString(), isNull());
     }
@@ -173,8 +159,8 @@ public class SandboxTest {
         savedSub.setId(42L);
 
         when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
-        when(problemTestRepository.findAllByProblemIdOrderByTestIndex(1L))
-                .thenReturn(List.of(toProblemTest(test, 1L)));
+        when(artefactik0Client.getTests(problem.getExternalId()))
+                .thenReturn(List.of(testCase));
         when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), isNull()))
                 .thenReturn("token-123");
         when(submissionRepository.save(any())).thenAnswer(inv -> {
@@ -184,7 +170,7 @@ public class SandboxTest {
         });
         when(submissionTestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        problemService.submitSolution(UUID.randomUUID(), UUID.randomUUID(),1L, "print(3)", 71);
+        problemService.submitSolution(UUID.randomUUID(), null, 1L, "print(3)", 71);
 
         assertThat(saved[0]).isNotNull();
         assertThat(saved[0].getStatus()).isEqualTo(Submission.Status.IN_QUEUE);
@@ -197,23 +183,15 @@ public class SandboxTest {
         savedSub.setId(42L);
 
         when(problemRepository.findById(1L)).thenReturn(Optional.of(problem));
-        when(problemTestRepository.findAllByProblemIdOrderByTestIndex(1L))
-                .thenReturn(List.of(toProblemTest(test, 1L)));
+        when(artefactik0Client.getTests(problem.getExternalId()))
+                .thenReturn(List.of(testCase));
         when(judge0Client.submitAsync(anyString(), anyInt(), anyString(), isNull()))
                 .thenReturn(null);
         when(submissionRepository.save(any())).thenReturn(savedSub);
 
-        assertThatThrownBy(() -> problemService.submitSolution(UUID.randomUUID(), UUID.randomUUID(),1L, "print(3)", 71))
+        assertThatThrownBy(() ->
+                problemService.submitSolution(UUID.randomUUID(), null, 1L, "print(3)", 71))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Judge0 unavailable");
-    }
-
-    private ProblemTest toProblemTest(PolygonProblem.Test t, Long problemId) {
-        ProblemTest pt = new ProblemTest();
-        pt.setProblemId(problemId);
-        pt.setTestIndex(t.getIndex());
-        pt.setInput(t.getInput());
-        pt.setExpectedOutput(t.getOutput());
-        return pt;
     }
 }

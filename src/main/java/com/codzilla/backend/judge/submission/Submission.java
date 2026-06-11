@@ -1,5 +1,5 @@
 
-package com.codzilla.backend.controller.Sandbox.submission;
+package com.codzilla.backend.judge.submission;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -29,6 +29,9 @@ public class Submission {
 
     @JdbcTypeCode(SqlTypes.UUID)
     private UUID matchId;
+
+    @Column(name = "sql_submission_id")
+    private Long sqlSubmissionId;
 
     @Transient
     private String sourceCode;

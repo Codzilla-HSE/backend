@@ -1,7 +1,5 @@
 package com.codzilla.backend.PreMatch.model;
 
 public enum ProblemType implements Option {
-    Algorithm,
-    Shell,
-    SQL
+    ALGORITHM, SQL , MATH , DATA_STRUCTURES
 }

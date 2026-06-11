@@ -1,4 +1,4 @@
-package com.codzilla.backend.controller.Sandbox.submission;
+package com.codzilla.backend.judge.submission;
 
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserRepository;

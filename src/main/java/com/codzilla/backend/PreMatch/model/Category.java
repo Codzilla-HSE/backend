@@ -1,13 +1,13 @@
 package com.codzilla.backend.PreMatch.model;
 
-import com.codzilla.backend.controller.Sandbox.problem.Problem;
+import com.codzilla.backend.judge.problem.Problem;
 import lombok.Getter;
 
 @Getter
 public enum Category {
     Language(Language.class),
-    ProblemType(Problem.ProblemType.class),
-    ProblemLevel(Problem.ProblemLevel.class);
+    ProblemType(ProblemType.class),
+    ProblemLevel(ProblemLevel.class);
 
     private final Class<? extends Option> optionClass;
 

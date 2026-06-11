@@ -1,4 +1,4 @@
-package com.codzilla.backend.controller.Sandbox.submission;
+package com.codzilla.backend.judge.submission;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;

@@ -1,9 +1,13 @@
 package com.codzilla.backend.Sandbox.controller;
 
+import com.codzilla.backend.PreMatch.MatchRoom.Match;
 import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
+import com.codzilla.backend.PreMatch.model.Category;
+import com.codzilla.backend.S3.S3Repository;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserService;
-import com.codzilla.backend.controller.Sandbox.problem.*;
+import com.codzilla.backend.judge.client.SqlServiceClient;
+import com.codzilla.backend.judge.problem.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +17,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.mock.web.MockMultipartFile;
 
-import java.util.UUID;
+import java.util.*;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -50,9 +54,17 @@ class ProblemControllerFileTest {
     private UserService userService;
 
     @MockitoBean
-    private com.codzilla.backend.controller.Sandbox.submission.SubmissionRepository submissionRepository;
+    private com.codzilla.backend.judge.submission.SubmissionRepository submissionRepository;
+
+    @MockitoBean
+    private SqlServiceClient sqlServiceClient;
+
+    @MockitoBean
+    private S3Repository s3Repository;
 
     private User mockUser;
+    private UUID matchId;
+    private Match match;
 
     @BeforeEach
     void setUp() {
@@ -61,8 +73,21 @@ class ProblemControllerFileTest {
                 .password("password")
                 .nickname("tester")
                 .build();
-    }
+        mockUser.setId(UUID.randomUUID());
 
+        matchId = UUID.randomUUID();
+        match = new Match();
+        match.setId(matchId);
+
+        // Проблема должна существовать, иначе будет NPE
+        Problem problem = new Problem();
+        problem.setId(1L);
+        match.setProblem(problem);
+
+        Map<Category, String> options = new HashMap<>();
+        options.put(Category.Language, "PYTHON");   // Language.PYTHON → id=71
+        match.setOptions(options);
+    }
 
     @Test
     void submitFile_shouldWork() throws Exception {
@@ -73,16 +98,13 @@ class ProblemControllerFileTest {
                 "print(3)".getBytes()
         );
 
-        when(userService.getIdByEmail("test@mail.com"))
-                .thenReturn(UUID.randomUUID());
-
+        when(matchService.getMatchById(matchId)).thenReturn(match);
         when(problemService.submitSolution(any(UUID.class), any(UUID.class), anyLong(), anyString(), anyInt()))
                 .thenReturn("Submitted!");
 
         mockMvc.perform(multipart("/problems/submit/file")
                         .file(file)
-                        .param("problemId", "1")
-                        .param("languageId", "71")
+                        .param("matchId", matchId.toString())
                         .with(user(mockUser)))
                 .andExpect(status().isOk());
     }

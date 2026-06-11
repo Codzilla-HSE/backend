@@ -1,4 +1,4 @@
-package com.codzilla.backend.controller.Sandbox.judge0;
+package com.codzilla.backend.judge.judge0;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;

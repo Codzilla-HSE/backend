@@ -2,7 +2,7 @@ package com.codzilla.backend.PreMatch.DraftSession;
 
 
 import com.codzilla.backend.PreMatch.model.*;
-import com.codzilla.backend.controller.Sandbox.problem.Problem;
+import com.codzilla.backend.judge.problem.Problem;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -30,11 +30,11 @@ public class DraftSessionConfig {
                 Language.SQL.name(),
                 Category.ProblemLevel,
 
-                Problem.ProblemType.ALGORITHM.name(),
+                ProblemType.ALGORITHM.name(),
                 Category.ProblemLevel,
-                Problem.ProblemType.MATH.name(),
+                ProblemType.MATH.name(),
                 Category.ProblemLevel,
-                Problem.ProblemType.DATA_STRUCTURES.name(),
+                ProblemType.DATA_STRUCTURES.name(),
                 Category.ProblemLevel
                 );
     }

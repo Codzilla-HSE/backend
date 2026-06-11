@@ -8,8 +8,11 @@ import com.codzilla.backend.PreMatch.MatchSettings;
 import com.codzilla.backend.PreMatch.events.DraftSessionFinishedEvent;
 import com.codzilla.backend.PreMatch.model.Category;
 import com.codzilla.backend.PreMatch.model.Language;
-import com.codzilla.backend.controller.Sandbox.problem.Problem;
-import com.codzilla.backend.controller.Sandbox.problem.ProblemRepository;
+import com.codzilla.backend.PreMatch.model.ProblemType;
+import com.codzilla.backend.judge.client.SqlServiceClient;
+import com.codzilla.backend.judge.problem.Problem;
+import com.codzilla.backend.judge.problem.ProblemRepository;
+import com.codzilla.backend.judge.problem.ProblemService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -34,6 +37,8 @@ public class MatchService {
     private final SimpMessagingTemplate messagingTemplate;
     private final MatchSettings matchSettings;
     private final ProblemRepository problemRepository;
+    private final SqlServiceClient sqlServiceClient;
+    private final ProblemService problemService;
     private final ApplicationEventPublisher eventPublisher;
 
     public UUID startMatch(UUID firstUserId, UUID secondUserId) {
@@ -90,11 +95,28 @@ public class MatchService {
     }
 
     public Problem pickProblemOfOptions(Map<Category, String> options) {
-        if (options.get(Category.Language).equals(Language.SQL.name())) {
-            throw new RuntimeException("No SQL support!");
+        // SQL в доменной модели — это ЯЗЫК (Category.Language == SQL), а не ProblemType.
+        // Поэтому SQL-задачу определяем по выбранному языку, а не по ProblemType.
+        String language = options.get(Category.Language);
+        String problemType = options.get(Category.ProblemType);
+        String problemLevel = options.getOrDefault(Category.ProblemLevel, "EASY").toUpperCase();
+        log.info("Pick problem of options: language={}, type={}, level={}",
+                language, problemType, problemLevel);
+
+        if (language != null && language.equalsIgnoreCase(Language.SQL.name())) {
+            log.info("Choosing SQL problem");
+            Problem sqlProblem = problemService.getOrCreateRandomSqlProblem(problemLevel);
+            log.info("Selected SQL problem: id={}, type={}", sqlProblem.getId(), sqlProblem.getType());
+            return sqlProblem;
         }
 
-        return problemRepository.getRandomProblem(options.get(Category.ProblemType), options.get(Category.ProblemLevel));
+        // Алгоритмическая задача: тип берём из ProblemType (ALGORITHM/MATH/DATA_STRUCTURES),
+        // по умолчанию ALGORITHM.
+        String algoType = (problemType != null) ? problemType : "ALGORITHM";
+        Problem algoProblem = problemService.getOrCreateRandomAlgoProblem(algoType, problemLevel);
+        log.info("Selected ALGO problem: id={}, type={}", algoProblem.getId(), algoProblem.getType());
+        log.info("Pick problem of options: language={}, type={}, level={}", language, problemType, problemLevel);
+        return algoProblem;
     }
 
     public Match getMatchById(UUID matchId) {
