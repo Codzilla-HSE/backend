@@ -1,5 +1,9 @@
 package com.codzilla.backend.judge.problem;
 
+import com.codzilla.backend.PreMatch.MatchRoom.Match;
+import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
+import com.codzilla.backend.PreMatch.model.Category;
+import com.codzilla.backend.PreMatch.model.Language;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserService;
 
@@ -27,6 +31,7 @@ public class ProblemController {
     private final UserService userService;
     private final SubmissionRepository submissionRepository;
     private final SqlServiceClient sqlServiceClient;
+    private final MatchService matchService;
 
     // ── Создание задач ────────────────────────────────────────────
 
@@ -71,6 +76,38 @@ public class ProblemController {
         UUID userId = userService.getIdByEmail(user.getEmail());
         return ResponseEntity.ok(
                 problemService.submitSolution(userId, id, sourceCode, languageId));
+    }
+
+
+    @PostMapping(value = "/submit/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> submitFileByMatch(
+            @AuthenticationPrincipal User user,
+            @RequestParam UUID matchId,
+            @RequestParam MultipartFile file
+    ) throws IOException {
+        // Получаем матч
+        Match match = matchService.getMatchById(matchId);
+        if (match == null) {
+            return ResponseEntity.badRequest().body("Match not found");
+        }
+
+        // ID задачи из матча
+        Long problemId = match.getProblem().getId();
+
+        // Определяем язык из опций матча (как в старой реализации)
+        String languageStr = match.getOptions().get(Category.Language);
+        int languageId = Enum.valueOf(Language.class, languageStr).getValue();
+
+        // Читаем файл
+        String sourceCode = new String(file.getBytes(), StandardCharsets.UTF_8);
+
+        // Пользователь
+        UUID userId = user.getId();
+
+        // Отправляем решение
+        String result = problemService.submitSolution(userId, problemId, sourceCode, languageId);
+
+        return ResponseEntity.ok(result);
     }
 
     // ── Статус посылки ────────────────────────────────────────────
