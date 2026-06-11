@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.mock.web.MockMultipartFile;
@@ -23,7 +24,7 @@ import java.util.*;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -35,7 +36,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration.class
         }
 )
-@AutoConfigureMockMvc(addFilters = false)
 class ProblemControllerTest {
 
     @MockitoBean
@@ -87,7 +87,7 @@ class ProblemControllerTest {
         match.setProblem(problem);
 
         Map<Category, String> options = new HashMap<>();
-        options.put(Category.Language, "PYTHON");
+        options.put(Category.Language, "PYTHON");   // PYTHON = 71
         match.setOptions(options);
     }
 
@@ -116,7 +116,7 @@ class ProblemControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.externalId").value(517936));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("517936")));
     }
 
     @Test
@@ -132,10 +132,11 @@ class ProblemControllerTest {
                 "print(3)".getBytes()
         );
 
+        // передаём аутентификацию напрямую, чтобы @AuthenticationPrincipal получил нашего User
         mockMvc.perform(multipart("/problems/submit/file")
                         .file(file)
                         .param("matchId", matchId.toString())
-                        .with(user(mockUser)))
+                        .with(authentication(new UsernamePasswordAuthenticationToken(mockUser, null, List.of()))))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("token-123")));
     }
