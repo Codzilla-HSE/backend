@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -49,21 +50,20 @@ public class Artefactik0Client {
     // Получить тесты задачи по её id в Artefactik0
     public List<TestCase> getTests(Long problemId) {
         try {
-            String raw = restClient.get()
+            // Используем ParameterizedTypeReference для получения списка
+            List<TestCase> tests = restClient.get()
                     .uri("/api/problems/" + problemId + "/tests")
                     .retrieve()
-                    .body(String.class);
-
-            TestsResponse response = objectMapper.readValue(raw, TestsResponse.class);
-            log.info("Artefactik0 returned {} tests for problem {}",
-                    response.getTests().size(), problemId);
-            return response.getTests();
+                    .body(new ParameterizedTypeReference<List<TestCase>>() {});
+            if (tests == null) {
+                throw new RuntimeException("No tests returned from Artefactik0 for problem " + problemId);
+            }
+            log.info("Artefactik0 returned {} tests for problem {}", tests.size(), problemId);
+            return tests;
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Failed to fetch tests from Artefactik0 for problem " + problemId, e);
+            throw new RuntimeException("Failed to fetch tests from Artefactik0 for problem " + problemId, e);
         }
     }
-
 
 
     /**
