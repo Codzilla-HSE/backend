@@ -10,6 +10,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 
 @Slf4j
@@ -45,10 +47,24 @@ public class SubmissionPollingService {
 
     private void updateTestStatus(SubmissionTest subTest, Judge0Client.SubmissionResponse response) {
         int statusId = response.getStatus().getId();
-        String actual = response.getStdout() == null ? "" : response.getStdout().trim();
+
+        // Декодируем stdout, если он пришёл в Base64
+        String actual = response.getStdout();
+        if (actual != null && !actual.isBlank()) {
+            try {
+                byte[] decoded = Base64.getDecoder().decode(actual);
+                actual = new String(decoded, StandardCharsets.UTF_8).trim();
+            } catch (IllegalArgumentException e) {
+                // Не Base64 — оставляем как есть
+                actual = actual.trim();
+            }
+        } else {
+            actual = "";
+        }
 
         subTest.setActualOutput(actual);
 
+        // Остальная логика без изменений
         if (statusId == 6) {
             subTest.setStatus(SubmissionTest.Status.COMPILE_ERROR);
         } else if (statusId >= 7 && statusId <= 12) {
@@ -65,8 +81,7 @@ public class SubmissionPollingService {
         }
 
         submissionTestRepository.save(subTest);
-        log.info("Test {} of submission {} → {}",
-                subTest.getTestIndex(), subTest.getSubmissionId(), subTest.getStatus());
+        log.info("Test {} of submission {} → {}", subTest.getTestIndex(), subTest.getSubmissionId(), subTest.getStatus());
     }
 
     private void updateSubmissionStatus(Long submissionId) {
