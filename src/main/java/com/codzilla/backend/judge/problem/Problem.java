@@ -17,10 +17,10 @@ public class Problem {
     private Long externalId;
 
     @Enumerated(EnumType.STRING)
-    private ProblemType type;
+    private ProblemType type = ProblemType.ALGORITHM;
 
     @Enumerated(EnumType.STRING)
-    private ProblemLevel level = ProblemLevel.EASY;
+    private ProblemLevel level ;
 
     public enum ProblemLevel {
         EASY, MEDIUM, HARD

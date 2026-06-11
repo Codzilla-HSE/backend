@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 
@@ -63,7 +64,42 @@ public class Artefactik0Client {
         }
     }
 
+
+
+    /**
+     * Получить случайную задачу из Artefactik0 по типу и сложности.
+     * @param type   ALGORITHM, DATA_STRUCTURES, MATH (пока заглушка -> ALGORITHM)
+     * @param level  EASY, MEDIUM, HARD
+     */
+    public RandomProblemResponse getRandomProblem(String type, String level) {
+        try {
+            // Пока type не поддерживается, но передаём для будущей совместимости
+            String uri = UriComponentsBuilder.fromPath("/api/problems/random")
+                    .queryParam("type", type.toUpperCase())
+                    .queryParam("complexity", level.toUpperCase())
+                    .build().toString();
+
+            String raw = restClient.get()
+                    .uri(uri)
+                    .retrieve()
+                    .body(String.class);
+            return objectMapper.readValue(raw, RandomProblemResponse.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch random problem from Artefactik0", e);
+        }
+    }
+
     // ── DTOs ──────────────────────────────────────────────────────
+
+
+    // DTO для ответа (только нужные поля)
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class RandomProblemResponse {
+        private Long id;
+        private String name;
+        private String level;   // EASY, MEDIUM, HARD
+    }
 
     @Data
     public static class CreateProblemRequest {

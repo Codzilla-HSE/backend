@@ -8,6 +8,7 @@ import com.codzilla.backend.judge.submission.Submission;
 import com.codzilla.backend.judge.submission.SubmissionRepository;
 import com.codzilla.backend.judge.submission.SubmissionTest;
 import com.codzilla.backend.judge.submission.SubmissionTestRepository;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -124,5 +125,59 @@ public class ProblemService {
         log.info("SQL submission delegated, sqlSubmissionId={}", sqlSubmissionId);
         // Префикс "sql:" — чтобы /status знал куда идти
         return "sql:" + sqlSubmissionId;
+    }
+
+    /**
+     * Получить или создать алгоритмическую задачу (ALGORITHM / DATA_STRUCTURES / MATH)
+     * @param type  тип задачи (пока всегда "ALGORITHM" как заглушка)
+     * @param level уровень сложности
+     */
+    @Transactional
+    public Problem getOrCreateRandomAlgoProblem(String type, String level) {
+        // 1. Запросить случайную задачу из Artefactik0
+        Artefactik0Client.RandomProblemResponse external =
+                artefactik0Client.getRandomProblem(type, level);
+
+        // 2. Преобразовать строковый тип в enum (пока заглушка -> ALGORITHM)
+        ProblemType problemType;
+        try {
+            problemType = ProblemType.valueOf(type.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            problemType = ProblemType.ALGORITHM;
+        }
+
+        // 3. Поиск в локальной БД
+        ProblemType finalProblemType = problemType;
+        return problemRepository.findByExternalIdAndType(external.getId(), problemType)
+                .orElseGet(() -> {
+                    Problem problem = new Problem();
+                    problem.setName(external.getName());
+                    problem.setExternalId(external.getId());
+                    problem.setType(finalProblemType);
+                    problem.setLevel(Problem.ProblemLevel.valueOf(external.getLevel().toUpperCase()));
+                    log.info("Created new ALGO problem in local DB: id={}, externalId={}",
+                            problem.getId(), problem.getExternalId());
+                    return problemRepository.save(problem);
+                });
+    }
+
+    /**
+     * Получить или создать SQL-задачу
+     */
+    @Transactional
+    public Problem getOrCreateRandomSqlProblem(String level) {
+        SqlServiceClient.RandomSqlTaskResponse external = sqlServiceClient.getRandomTask(level);
+
+        return problemRepository.findByExternalIdAndType(external.getId(), ProblemType.SQL)
+                .orElseGet(() -> {
+                    Problem problem = new Problem();
+                    problem.setName(external.getName());
+                    problem.setExternalId(external.getId());
+                    problem.setType(ProblemType.SQL);
+                    problem.setLevel(Problem.ProblemLevel.valueOf(external.getLevel().toUpperCase()));
+                    log.info("Created new SQL problem in local DB: id={}, externalId={}",
+                            problem.getId(), problem.getExternalId());
+                    return problemRepository.save(problem);
+                });
     }
 }

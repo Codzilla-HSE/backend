@@ -61,7 +61,29 @@ public class SqlServiceClient {
         }
     }
 
+
+    // Получить случайную SQL-задачу по уровню сложности
+    public RandomSqlTaskResponse getRandomTask(String level) {
+        try {
+            String raw = restClient.get()
+                    .uri("/sqlservice/tasks/random?level=" + level) //TODO сделать такую ручку
+                    .retrieve()
+                    .body(String.class);
+            return objectMapper.readValue(raw, RandomSqlTaskResponse.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch random SQL task for level " + level, e);
+        }
+    }
+
     // ── DTOs ──────────────────────────────────────────────────────
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class RandomSqlTaskResponse {
+        private Long id;          // externalId задачи в SqlService
+        private String name;
+        private String level;     // EASY, MEDIUM, HARD
+    }
 
     @Data
     public static class SubmitRequest {

@@ -8,8 +8,11 @@ import com.codzilla.backend.PreMatch.MatchSettings;
 import com.codzilla.backend.PreMatch.events.DraftSessionFinishedEvent;
 import com.codzilla.backend.PreMatch.model.Category;
 import com.codzilla.backend.PreMatch.model.Language;
+import com.codzilla.backend.PreMatch.model.ProblemType;
+import com.codzilla.backend.judge.client.SqlServiceClient;
 import com.codzilla.backend.judge.problem.Problem;
 import com.codzilla.backend.judge.problem.ProblemRepository;
+import com.codzilla.backend.judge.problem.ProblemService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -32,6 +35,8 @@ public class MatchService {
     private final SimpMessagingTemplate messagingTemplate;
     private final MatchSettings matchSettings;
     private final ProblemRepository problemRepository;
+    private final SqlServiceClient sqlServiceClient;
+    private final ProblemService problemService;
 
     public UUID startMatch(UUID firstUserId, UUID secondUserId) {
         Match match = new Match(
@@ -60,14 +65,23 @@ public class MatchService {
     }
 
     public Problem pickProblemOfOptions(Map<Category, String> options) {
-        if (options.get(Category.Language).equals(Language.SQL.name())) {
-            throw new RuntimeException("No SQL support!");
+        String problemType = options.get(Category.ProblemType);
+        String problemLevel = options.getOrDefault(Category.ProblemLevel, "EASY").toUpperCase();
+
+        // 1. Если тип = SQL -> идём в SqlService
+        if (problemType != null && problemType.equalsIgnoreCase("SQL")) {
+            return problemService.getOrCreateRandomSqlProblem(problemLevel);
         }
 
-        String problemType = options.get(Category.ProblemType);   // "ALGORITHM", "MATH" и т.д.
-        String problemLevel = options.get(Category.ProblemLevel).toUpperCase(); // "Hard" → "HARD"
-
-        return problemRepository.getRandomProblem(problemType, problemLevel);
+        // 2. Иначе — алгоритмическая задача (ALGORITHM, DATA_STRUCTURES, MATH)
+        // Пока используем заглушку "ALGORITHM", но в будущем можно передавать реальный тип
+        String algoType = "ALGORITHM"; // заглушка
+        // Если тип пришёл и не SQL, можно попробовать использовать его (для будущей совместимости)
+        if (problemType != null && !problemType.equalsIgnoreCase("SQL")) {
+            // Пока Artefactik0 не поддерживает, но оставим задел
+            algoType = problemType;
+        }
+        return problemService.getOrCreateRandomAlgoProblem(algoType, problemLevel);
     }
 
     public Match getMatchById(UUID matchId) {
