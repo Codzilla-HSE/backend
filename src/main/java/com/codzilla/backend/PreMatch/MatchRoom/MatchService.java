@@ -65,22 +65,24 @@ public class MatchService {
     }
 
     public Problem pickProblemOfOptions(Map<Category, String> options) {
+        // SQL в доменной модели — это ЯЗЫК (Category.Language == SQL), а не ProblemType.
+        // Поэтому SQL-задачу определяем по выбранному языку, а не по ProblemType.
+        String language = options.get(Category.Language);
         String problemType = options.get(Category.ProblemType);
         String problemLevel = options.getOrDefault(Category.ProblemLevel, "EASY").toUpperCase();
-        log.info("Pick problem of options: type={}, level={}", problemType, problemLevel);
+        log.info("Pick problem of options: language={}, type={}, level={}",
+                language, problemType, problemLevel);
 
-        if (problemType != null && problemType.equalsIgnoreCase("SQL")) {
+        if (language != null && language.equalsIgnoreCase(Language.SQL.name())) {
             log.info("Choosing SQL problem");
             Problem sqlProblem = problemService.getOrCreateRandomSqlProblem(problemLevel);
             log.info("Selected SQL problem: id={}, type={}", sqlProblem.getId(), sqlProblem.getType());
             return sqlProblem;
         }
 
-        // Алгоритмическая задача
-        String algoType = "ALGORITHM";
-        if (problemType != null && !problemType.equalsIgnoreCase("SQL")) {
-            algoType = problemType;
-        }
+        // Алгоритмическая задача: тип берём из ProblemType (ALGORITHM/MATH/DATA_STRUCTURES),
+        // по умолчанию ALGORITHM.
+        String algoType = (problemType != null) ? problemType : "ALGORITHM";
         Problem algoProblem = problemService.getOrCreateRandomAlgoProblem(algoType, problemLevel);
         log.info("Selected ALGO problem: id={}, type={}", algoProblem.getId(), algoProblem.getType());
         return algoProblem;
