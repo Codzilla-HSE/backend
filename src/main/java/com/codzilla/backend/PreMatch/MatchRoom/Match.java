@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -25,7 +26,8 @@ public class Match {
 
     enum Status {
         DRAFTING,
-        LIVE
+        LIVE,
+        FINISHED
     }
 
     @Id
@@ -38,6 +40,13 @@ public class Match {
 
     @JdbcTypeCode(SqlTypes.UUID)
     UUID secondUserId;
+
+    @JdbcTypeCode(SqlTypes.UUID)
+    UUID winnerId;
+
+    Instant finishedAt;
+
+    boolean ratingApplied = false;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "options", columnDefinition = "jsonb")
@@ -60,6 +69,12 @@ public class Match {
         }
         options = new_options;
         log.info("Set options for match: {}", options);
+    }
+
+    public UUID opponentOf(UUID userId) {
+        if (userId.equals(firstUserId)) return secondUserId;
+        if (userId.equals(secondUserId)) return firstUserId;
+        return null;
     }
 
     Match(UUID firstUserId, UUID secondUserId) {

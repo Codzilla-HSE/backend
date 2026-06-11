@@ -48,7 +48,6 @@ public class UserService {
                        .email(dto.email())
                        .nickname(dto.nickname())
                        .password(passwordEncoder.encode(dto.rawPassword()))
-                       .rating(100)
                        .build();
         userRepository.save(user);
 
@@ -84,7 +83,6 @@ public class UserService {
                              .email("a@gmail.com")
                              .password(passwordEncoder.encode("0"))
                              .authorities(List.of(new SimpleGrantedAuthority("ADMIN")))
-                             .rating(100)
                              .build();
             userRepository.save(admin);
         }

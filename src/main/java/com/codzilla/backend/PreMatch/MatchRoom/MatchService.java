@@ -1,6 +1,6 @@
 package com.codzilla.backend.PreMatch.MatchRoom;
 
-
+import com.codzilla.backend.Rating.MatchFinishedEvent;
 import com.codzilla.backend.PreMatch.DTO.WebSocketDTO;
 import com.codzilla.backend.PreMatch.DraftSession.DraftSession;
 import com.codzilla.backend.PreMatch.DraftSession.DraftSessionService;
@@ -18,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.context.ApplicationEventPublisher;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,6 +34,7 @@ public class MatchService {
     private final SimpMessagingTemplate messagingTemplate;
     private final MatchSettings matchSettings;
     private final ProblemRepository problemRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public UUID startMatch(UUID firstUserId, UUID secondUserId) {
         Match match = new Match(
@@ -57,6 +60,33 @@ public class MatchService {
         match.setProblem(problem);
         match.setStatus(Match.Status.LIVE);
         matchRepository.save(match);
+    }
+
+    @Transactional
+    public boolean finishMatch(UUID matchId, UUID winnerId) {
+        Match match = matchRepository.findById(matchId).orElse(null);
+        if (match == null) {
+            log.warn("finishMatch: match {} not found", matchId);
+            return false;
+        }
+        if (match.getStatus() == Match.Status.FINISHED) {
+            return false;
+        }
+
+        UUID loserId = match.opponentOf(winnerId);
+        if (loserId == null) {
+            log.warn("finishMatch: user {} is not a participant of match {}", winnerId, matchId);
+            return false;
+        }
+
+        match.setStatus(Match.Status.FINISHED);
+        match.setWinnerId(winnerId);
+        match.setFinishedAt(Instant.now());
+        matchRepository.save(match);
+
+        eventPublisher.publishEvent(new MatchFinishedEvent(matchId, winnerId, loserId));
+        log.info("Match {} finished, winner {}", matchId, winnerId);
+        return true;
     }
 
     public Problem pickProblemOfOptions(Map<Category, String> options) {

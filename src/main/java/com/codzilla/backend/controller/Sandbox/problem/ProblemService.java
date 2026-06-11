@@ -58,7 +58,7 @@ public class ProblemService {
         return saved;
     }
 
-    public String submitSolution(UUID userId, Long problemId, String sourceCode, int languageId) {
+    public String submitSolution(UUID userId, UUID matchId, Long problemId, String sourceCode, int languageId) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new RuntimeException("Problem not found: " + problemId));
 
@@ -73,6 +73,7 @@ public class ProblemService {
         Submission sub = new Submission();
         sub.setProblemId(problemId);
         sub.setUserId(userId);
+        sub.setMatchId(matchId);
 
         sub.setLanguageId(languageId);
         sub.setStatus(Submission.Status.IN_QUEUE);
