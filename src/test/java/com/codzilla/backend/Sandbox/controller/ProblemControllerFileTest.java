@@ -1,11 +1,14 @@
 package com.codzilla.backend.Sandbox.controller;
 
+import com.codzilla.backend.PreMatch.MatchRoom.Match;
 import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import com.codzilla.backend.S3.S3Repository;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserService;
 import com.codzilla.backend.judge.client.SqlServiceClient;
 import com.codzilla.backend.judge.problem.*;
+import com.codzilla.backend.PreMatch.model.Category;
+import com.codzilla.backend.PreMatch.model.Language;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +18,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.mock.web.MockMultipartFile;
 
-import java.util.UUID;
+import java.util.*;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -54,7 +57,6 @@ class ProblemControllerFileTest {
     @MockitoBean
     private com.codzilla.backend.judge.submission.SubmissionRepository submissionRepository;
 
-    // Новые зависимости контроллера
     @MockitoBean
     private SqlServiceClient sqlServiceClient;
 
@@ -62,6 +64,8 @@ class ProblemControllerFileTest {
     private S3Repository s3Repository;
 
     private User mockUser;
+    private UUID matchId;
+    private Match match;
 
     @BeforeEach
     void setUp() {
@@ -70,6 +74,18 @@ class ProblemControllerFileTest {
                 .password("password")
                 .nickname("tester")
                 .build();
+        mockUser.setId(UUID.randomUUID());   // важно для submitFileByMatch
+
+        matchId = UUID.randomUUID();
+
+        // Создаём Match с нужными полями
+        match = new Match();
+        match.setId(matchId);
+        match.setProblem(new Problem());
+        match.getProblem().setId(1L);        // ID задачи
+        Map<Category, String> options = new HashMap<>();
+        options.put(Category.Language, "PYTHON");   // languageId = 71 (Python)
+        match.setOptions(options);
     }
 
     @Test
@@ -81,16 +97,13 @@ class ProblemControllerFileTest {
                 "print(3)".getBytes()
         );
 
-        when(userService.getIdByEmail("test@mail.com"))
-                .thenReturn(UUID.randomUUID());
-
+        when(matchService.getMatchById(matchId)).thenReturn(match);
         when(problemService.submitSolution(any(UUID.class), any(UUID.class), anyLong(), anyString(), anyInt()))
                 .thenReturn("Submitted!");
 
         mockMvc.perform(multipart("/problems/submit/file")
                         .file(file)
-                        .param("problemId", "1")
-                        .param("languageId", "71")
+                        .param("matchId", matchId.toString())
                         .with(user(mockUser)))
                 .andExpect(status().isOk());
     }
