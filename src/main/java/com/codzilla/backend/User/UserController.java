@@ -21,6 +21,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -47,29 +48,59 @@ public class UserController {
                 responseUser.getNickname(),
                 responseUser.getEmail(),
                 responseUser.getRating(),
-                createPresignedGetUrl(s3Settings.bucketName(), "icons/" + user.getEmail())
+                createPresignedGetUrl(
+                        s3Settings.bucketName(),
+                        "icons/" + user.getEmail()
+                ),
+                responseUser.getId()
         );
         return ResponseEntity.ok(info);
+    }
+
+    @GetMapping("/info/{userId}")
+    ResponseEntity<?> getUserInfo(@PathVariable UUID userId) {
+        var responseUser = userService.getById(userId);
+
+        if (responseUser.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        var user = responseUser.get();
+        return ResponseEntity.ok(new UserInfoResponseDTO(
+                user.getNickname(),
+                user.getEmail(),
+                user.getRating(),
+                createPresignedGetUrl(
+                        s3Settings.bucketName(),
+                        "icons/" + user.getEmail()
+                ),
+                user.getId()
+        ));
     }
 
     @GetMapping("/icon-url")
     public String getAvatarUrl(@AuthenticationPrincipal User user) {
 
-        return createPresignedGetUrl(s3Settings.bucketName(), "icons/" + user.getEmail());
+        return createPresignedGetUrl(
+                s3Settings.bucketName(),
+                "icons/" + user.getEmail()
+        );
     }
 
     @PostMapping("/upload-icon")
-    public ResponseEntity<?> uploadIcon(@AuthenticationPrincipal User user, @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadIcon(@AuthenticationPrincipal User user,
+                                        @RequestParam("file") MultipartFile file) {
         try {
 
             String fileName = "icons/" + user.getEmail();
 
-            s3Client.putObject(PutObjectRequest.builder()
-                            .key(fileName)
-                            .bucket(s3Settings.bucketName())
-                            .contentType(file.getContentType())
-                                               .build(),
-                    RequestBody.fromBytes(file.getBytes()));
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                                    .key(fileName)
+                                    .bucket(s3Settings.bucketName())
+                                    .contentType(file.getContentType())
+                                    .build(),
+                    RequestBody.fromBytes(file.getBytes())
+            );
             return ResponseEntity.ok("Ok");
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Ошибка при чтении файла");
@@ -90,8 +121,14 @@ public class UserController {
                                                                         .build();
 
         PresignedGetObjectRequest presignedRequest = presigner.presignGetObject(presignRequest);
-        log.info("Presigned URL: [{}]", presignedRequest.url().toString());
-        log.info("HTTP method: [{}]", presignedRequest.httpRequest().method());
+        log.info(
+                "Presigned URL: [{}]",
+                presignedRequest.url().toString()
+        );
+        log.info(
+                "HTTP method: [{}]",
+                presignedRequest.httpRequest().method()
+        );
 
         return presignedRequest.url().toExternalForm();
 
@@ -102,7 +139,10 @@ public class UserController {
             @AuthenticationPrincipal User user,
             @org.springframework.web.bind.annotation.RequestBody ChangeUserRequestDTO dto
     ) {
-        userService.updateUser(user.getEmail(), dto);
+        userService.updateUser(
+                user.getEmail(),
+                dto
+        );
         return ResponseEntity.ok("Ok");
     }
 }

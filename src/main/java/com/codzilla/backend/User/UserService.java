@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -97,5 +98,9 @@ public class UserService {
         }
 
         userRepository.save(user.get());
+    }
+
+    public Optional<User> getById(UUID userId) {
+        return userRepository.findById(userId);
     }
 }
