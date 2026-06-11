@@ -119,10 +119,11 @@ public class ProblemService {
     }
 
     // SQL: полностью делегируем в SqlService
-    private String submitSql(UUID userId, Problem problem, String query , UUID matchId) {
+    private String submitSql(UUID userId, Problem problem, String query, UUID matchId) {
         if (query == null || query.isBlank()) {
             throw new RuntimeException("SQL query cannot be empty");
         }
+
         Long sqlSubmissionId = sqlServiceClient.submitSolution(
                 problem.getExternalId(),
                 userId.toString(),
@@ -130,7 +131,19 @@ public class ProblemService {
                 matchId
         );
         log.info("SQL submission delegated, sqlSubmissionId={}", sqlSubmissionId);
-        return "sql:" + sqlSubmissionId;
+
+        // Создаём локальную запись — чтобы polling и SubmissionController работали
+        Submission sub = new Submission();
+        sub.setProblemId(problem.getId());
+        sub.setUserId(userId);
+        sub.setMatchId(matchId);
+        sub.setLanguageId(0); // SQL не имеет languageId
+        sub.setStatus(Submission.Status.IN_QUEUE);
+        sub.setSqlSubmissionId(sqlSubmissionId); // новое поле — см. ниже
+        Submission saved = submissionRepository.save(sub);
+
+        log.info("Local SQL submission {} created, sqlSubmissionId={}", saved.getId(), sqlSubmissionId);
+        return saved.getId().toString(); // возвращаем локальный id, не "sql:123"
     }
 
     /**

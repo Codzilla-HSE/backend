@@ -30,6 +30,9 @@ public class Submission {
     @JdbcTypeCode(SqlTypes.UUID)
     private UUID matchId;
 
+    @Column(name = "sql_submission_id")
+    private Long sqlSubmissionId;
+
     @Transient
     private String sourceCode;
 

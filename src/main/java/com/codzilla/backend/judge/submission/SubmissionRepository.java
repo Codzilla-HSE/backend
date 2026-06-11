@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     Optional<Submission> findByJudge0Token(String token);
     List<Submission> findAllByStatus(Submission.Status status);
-
+    List<Submission> findAllByStatusAndSqlSubmissionIdIsNotNull(Submission.Status status);
     List<Submission> findAllByUserIdOrderByCreatedAtDesc(UUID userId);
     Optional<Submission> findFirstByUserIdOrderByUpdatedAtDesc(UUID userId);
 }
