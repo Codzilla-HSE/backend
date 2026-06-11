@@ -12,7 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -164,20 +166,29 @@ public class ProblemService {
     /**
      * Получить или создать SQL-задачу
      */
-    @Transactional
     public Problem getOrCreateRandomSqlProblem(String level) {
-        SqlServiceClient.RandomSqlTaskResponse external = sqlServiceClient.getRandomTask(level);
+        // Порядок попыток: запрошенный уровень -> MEDIUM -> EASY
+        List<String> levelsToTry = new ArrayList<>();
+        levelsToTry.add(level.toUpperCase());
+        if (!"MEDIUM".equalsIgnoreCase(level)) levelsToTry.add("MEDIUM");
+        if (!"EASY".equalsIgnoreCase(level)) levelsToTry.add("EASY");
 
-        return problemRepository.findByExternalIdAndType(external.getId(), ProblemType.SQL)
-                .orElseGet(() -> {
-                    Problem problem = new Problem();
-                    problem.setName(external.getName());
-                    problem.setExternalId(external.getId());
-                    problem.setType(ProblemType.SQL);
-                    problem.setLevel(Problem.ProblemLevel.valueOf(external.getLevel().toUpperCase()));
-                    log.info("Created new SQL problem in local DB: id={}, externalId={}",
-                            problem.getId(), problem.getExternalId());
-                    return problemRepository.save(problem);
-                });
+        for (String lvl : levelsToTry) {
+            try {
+                SqlServiceClient.RandomSqlTaskResponse external = sqlServiceClient.getRandomTask(lvl);
+                return problemRepository.findByExternalIdAndType(external.getId(), ProblemType.SQL)
+                        .orElseGet(() -> {
+                            Problem problem = new Problem();
+                            problem.setName(external.getName());
+                            problem.setExternalId(external.getId());
+                            problem.setType(ProblemType.SQL);
+                            problem.setLevel(Problem.ProblemLevel.valueOf(external.getLevel().toUpperCase()));
+                            return problemRepository.save(problem);
+                        });
+            } catch (HttpClientErrorException.NotFound e) {
+                log.warn("No SQL task for level {}, trying next level", lvl);
+            }
+        }
+        throw new RuntimeException("No SQL tasks found at any level (EASY, MEDIUM, HARD)");
     }
 }
