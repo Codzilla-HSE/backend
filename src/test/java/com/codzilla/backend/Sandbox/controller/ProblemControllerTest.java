@@ -12,24 +12,32 @@ import com.codzilla.backend.judge.problem.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.util.*;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = ProblemController.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ProblemControllerTest {
+
+    @Autowired
+    private WebApplicationContext context;
+
+    private MockMvc mockMvc;
 
     @MockitoBean
     private MatchService matchService;
@@ -39,9 +47,6 @@ class ProblemControllerTest {
 
     @MockitoBean
     private com.codzilla.backend.Authentication.JWTUtils.JWTUtils jwtUtils;
-
-    @Autowired
-    private MockMvc mockMvc;
 
     @MockitoBean
     private ProblemService problemService;
@@ -64,6 +69,11 @@ class ProblemControllerTest {
 
     @BeforeEach
     void setUp() {
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
+
         mockUser = User.builder()
                 .email("test@mail.com")
                 .password("password")
@@ -106,9 +116,8 @@ class ProblemControllerTest {
         }
         """;
 
-        // Создаем Authentication, где principal - наш User объект
         var auth = new UsernamePasswordAuthenticationToken(
-                mockUser,  // principal - User объект!
+                mockUser,
                 null,
                 List.of(new SimpleGrantedAuthority("ROLE_USER"))
         );
@@ -134,9 +143,8 @@ class ProblemControllerTest {
                 "print(3)".getBytes()
         );
 
-        // Создаем Authentication, где principal - наш User объект
         var auth = new UsernamePasswordAuthenticationToken(
-                mockUser,  // principal - User объект!
+                mockUser,
                 null,
                 List.of(new SimpleGrantedAuthority("ROLE_USER"))
         );
