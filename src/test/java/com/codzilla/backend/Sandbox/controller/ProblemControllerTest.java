@@ -4,6 +4,7 @@ import com.codzilla.backend.PreMatch.MatchRoom.Match;
 import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import com.codzilla.backend.PreMatch.model.Category;
 import com.codzilla.backend.PreMatch.model.ProblemType;
+import com.codzilla.backend.PreMatch.model.Language;
 import com.codzilla.backend.S3.S3Repository;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserService;
@@ -12,7 +13,6 @@ import com.codzilla.backend.judge.problem.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -87,7 +87,8 @@ class ProblemControllerTest {
         match.setProblem(problem);
 
         Map<Category, String> options = new HashMap<>();
-        options.put(Category.Language, "PYTHON");   // PYTHON = 71
+        // Имя должно точно совпадать с константой enum Language, предположительно "Python"
+        options.put(Category.Language, "Python");
         match.setOptions(options);
     }
 
@@ -116,7 +117,7 @@ class ProblemControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("517936")));
+                .andExpect(jsonPath("$.externalId").value(517936));
     }
 
     @Test
@@ -132,7 +133,6 @@ class ProblemControllerTest {
                 "print(3)".getBytes()
         );
 
-        // передаём аутентификацию напрямую, чтобы @AuthenticationPrincipal получил нашего User
         mockMvc.perform(multipart("/problems/submit/file")
                         .file(file)
                         .param("matchId", matchId.toString())
