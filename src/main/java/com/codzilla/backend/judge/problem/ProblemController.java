@@ -78,35 +78,32 @@ public class ProblemController {
                 problemService.submitSolution(userId, id, sourceCode, languageId));
     }
 
-
     @PostMapping(value = "/submit/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> submitFileByMatch(
             @AuthenticationPrincipal User user,
             @RequestParam UUID matchId,
             @RequestParam MultipartFile file
     ) throws IOException {
-        // Получаем матч
         Match match = matchService.getMatchById(matchId);
         if (match == null) {
             return ResponseEntity.badRequest().body("Match not found");
         }
 
-        // ID задачи из матча
-        Long problemId = match.getProblem().getId();
-
-        // Определяем язык из опций матча (как в старой реализации)
-        String languageStr = match.getOptions().get(Category.Language);
-        int languageId = Enum.valueOf(Language.class, languageStr).getValue();
-
         // Читаем файл
         String sourceCode = new String(file.getBytes(), StandardCharsets.UTF_8);
+        log.info("Received file for match {}: size={}, content (first 100 chars): {}",
+                matchId, sourceCode.length(), sourceCode.substring(0, Math.min(100, sourceCode.length())));
 
-        // Пользователь
+        if (sourceCode == null || sourceCode.isBlank()) {
+            return ResponseEntity.badRequest().body("Source code is empty");
+        }
+
+        Long problemId = match.getProblem().getId();
+        String languageStr = match.getOptions().get(Category.Language);
+        int languageId = Enum.valueOf(Language.class, languageStr).getValue();
         UUID userId = user.getId();
 
-        // Отправляем решение
         String result = problemService.submitSolution(userId, problemId, sourceCode, languageId);
-
         return ResponseEntity.ok(result);
     }
 

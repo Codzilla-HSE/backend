@@ -85,6 +85,7 @@ public class MatchService {
         String algoType = (problemType != null) ? problemType : "ALGORITHM";
         Problem algoProblem = problemService.getOrCreateRandomAlgoProblem(algoType, problemLevel);
         log.info("Selected ALGO problem: id={}, type={}", algoProblem.getId(), algoProblem.getType());
+        log.info("Pick problem of options: language={}, type={}, level={}", language, problemType, problemLevel);
         return algoProblem;
     }
 

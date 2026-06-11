@@ -117,13 +117,15 @@ public class ProblemService {
 
     // SQL: полностью делегируем в SqlService
     private String submitSql(UUID userId, Problem problem, String query) {
+        if (query == null || query.isBlank()) {
+            throw new RuntimeException("SQL query cannot be empty");
+        }
         Long sqlSubmissionId = sqlServiceClient.submitSolution(
                 problem.getExternalId(),
                 userId.toString(),
                 query
         );
         log.info("SQL submission delegated, sqlSubmissionId={}", sqlSubmissionId);
-        // Префикс "sql:" — чтобы /status знал куда идти
         return "sql:" + sqlSubmissionId;
     }
 
