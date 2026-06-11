@@ -56,6 +56,7 @@ public class ProblemController {
         log.info("Submit of match: {}", match);
         String result = problemService.submitSolution(
                 userId,
+                matchId,
                 match.getProblem().getId(),
                 sourceCode,
                 Enum.valueOf(Language.class, match.getOptions().get(Category.Language)).getValue()
@@ -78,7 +79,7 @@ public class ProblemController {
             @PathVariable Long id,
             @RequestParam int languageId,
             @RequestBody String sourceCode) {
-        String result = problemService.submitSolution(UUID.randomUUID(), id, sourceCode, languageId);
+        String result = problemService.submitSolution(UUID.randomUUID(), null, id, sourceCode, languageId);
         return ResponseEntity.ok(result);
     }
 

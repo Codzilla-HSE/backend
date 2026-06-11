@@ -76,7 +76,7 @@ class ProblemControllerFileTest {
         when(userService.getIdByEmail("test@mail.com"))
                 .thenReturn(UUID.randomUUID());
 
-        when(problemService.submitSolution(any(UUID.class), anyLong(), anyString(), anyInt()))
+        when(problemService.submitSolution(any(UUID.class), any(UUID.class), anyLong(), anyString(), anyInt()))
                 .thenReturn("Submitted!");
 
         mockMvc.perform(multipart("/problems/submit/file")

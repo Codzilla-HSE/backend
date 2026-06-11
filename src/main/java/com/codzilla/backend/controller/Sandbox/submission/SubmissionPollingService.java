@@ -1,6 +1,7 @@
 package com.codzilla.backend.controller.Sandbox.submission;
 
 import com.codzilla.backend.controller.Sandbox.judge0.Judge0Client;
+import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,6 +25,7 @@ public class SubmissionPollingService {
     private final Judge0Client judge0Client;
 
     private final ApplicationEventPublisher eventPublisher;
+    private final MatchService matchService;
 
     @Transactional(readOnly = true)
     public List<Submission> getPendingSubmissions() {
@@ -80,7 +82,6 @@ public class SubmissionPollingService {
 
         if (!allDone) return;
 
-        // ищем первый провальный тест
         SubmissionTest firstFailed = allTests.stream()
                 .filter(t -> t.getStatus() != SubmissionTest.Status.ACCEPTED)
                 .findFirst()
@@ -92,6 +93,9 @@ public class SubmissionPollingService {
         if (firstFailed == null) {
             sub.setStatus(Submission.Status.ACCEPTED);
             sub.setResultDetails("All " + allTests.size() + " tests passed");
+            if (sub.getMatchId() != null) {
+                matchService.finishMatch(sub.getMatchId(), sub.getUserId());
+            }
         } else {
             Submission.Status status = switch (firstFailed.getStatus()) {
                 case WRONG_ANSWER -> Submission.Status.WRONG_ANSWER;

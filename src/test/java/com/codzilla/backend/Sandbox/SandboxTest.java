@@ -104,7 +104,7 @@ public class SandboxTest {
     void submitSolution_shouldThrowWhenProblemNotFound() {
         when(problemRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> problemService.submitSolution(UUID.randomUUID(), 99L, "code", 71))
+        assertThatThrownBy(() -> problemService.submitSolution(UUID.randomUUID(), UUID.randomUUID(),99L, "code", 71))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Problem not found");
     }
@@ -136,7 +136,7 @@ public class SandboxTest {
         when(submissionRepository.save(any())).thenReturn(savedSub);
         when(submissionTestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        String result = problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71);
+        String result = problemService.submitSolution(UUID.randomUUID(), UUID.randomUUID(), 1L, "print(3)", 71);
 
         assertThat(result).isEqualTo("42");
     }
@@ -161,7 +161,7 @@ public class SandboxTest {
         when(submissionRepository.save(any())).thenReturn(savedSub);
         when(submissionTestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71);
+        problemService.submitSolution(UUID.randomUUID(), UUID.randomUUID(),1L, "print(3)", 71);
 
         verify(judge0Client, times(2)).submitAsync(anyString(), anyInt(), anyString(), isNull());
     }
@@ -184,7 +184,7 @@ public class SandboxTest {
         });
         when(submissionTestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71);
+        problemService.submitSolution(UUID.randomUUID(), UUID.randomUUID(),1L, "print(3)", 71);
 
         assertThat(saved[0]).isNotNull();
         assertThat(saved[0].getStatus()).isEqualTo(Submission.Status.IN_QUEUE);
@@ -203,7 +203,7 @@ public class SandboxTest {
                 .thenReturn(null);
         when(submissionRepository.save(any())).thenReturn(savedSub);
 
-        assertThatThrownBy(() -> problemService.submitSolution(UUID.randomUUID(), 1L, "print(3)", 71))
+        assertThatThrownBy(() -> problemService.submitSolution(UUID.randomUUID(), UUID.randomUUID(),1L, "print(3)", 71))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Judge0 unavailable");
     }

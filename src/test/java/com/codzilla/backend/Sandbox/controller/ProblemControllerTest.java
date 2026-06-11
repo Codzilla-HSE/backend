@@ -85,7 +85,7 @@ class ProblemControllerTest {
     @Test
     void submit_shouldReturnResult() throws Exception {
 
-        when(problemService.submitSolution(any(UUID.class), anyLong(), anyString(), anyInt()))
+        when(problemService.submitSolution(any(UUID.class), any(UUID.class), anyLong(), anyString(), anyInt()))
                 .thenReturn("Submitted! token-123");
 
         mockMvc.perform(post("/problems/1/submit")
