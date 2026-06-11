@@ -1,8 +1,10 @@
 package com.codzilla.backend.Sandbox.controller;
 
 import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
+import com.codzilla.backend.S3.S3Repository;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserService;
+import com.codzilla.backend.judge.client.SqlServiceClient;
 import com.codzilla.backend.judge.problem.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,6 +53,13 @@ class ProblemControllerFileTest {
 
     @MockitoBean
     private com.codzilla.backend.judge.submission.SubmissionRepository submissionRepository;
+
+    // Новые зависимости контроллера
+    @MockitoBean
+    private SqlServiceClient sqlServiceClient;
+
+    @MockitoBean
+    private S3Repository s3Repository;
 
     private User mockUser;
 

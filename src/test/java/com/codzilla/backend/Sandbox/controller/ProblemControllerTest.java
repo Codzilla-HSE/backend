@@ -2,7 +2,9 @@ package com.codzilla.backend.Sandbox.controller;
 
 import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import com.codzilla.backend.PreMatch.model.ProblemType;
+import com.codzilla.backend.S3.S3Repository;
 import com.codzilla.backend.User.UserService;
+import com.codzilla.backend.judge.client.SqlServiceClient;
 import com.codzilla.backend.judge.problem.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +53,12 @@ class ProblemControllerTest {
     @MockitoBean
     private com.codzilla.backend.judge.submission.SubmissionRepository submissionRepository;
 
+    @MockitoBean
+    private SqlServiceClient sqlServiceClient;
+
+    @MockitoBean
+    private S3Repository s3Repository;
+
     @Test
     void createProblem_shouldReturnSavedProblem() throws Exception {
         Problem problem = new Problem();
@@ -59,9 +67,6 @@ class ProblemControllerTest {
         problem.setType(ProblemType.ALGORITHM);
         problem.setLevel(Problem.ProblemLevel.EASY);
 
-        // контроллер теперь вызывает createAlgoProblem / registerSqlProblem,
-        // поэтому мокаем соответствующий метод. Предположим, что createProblem
-        // всё ещё существует и принимает CreateAlgoProblemRequest
         when(problemService.createAlgoProblem(any())).thenReturn(problem);
 
         String json = """
