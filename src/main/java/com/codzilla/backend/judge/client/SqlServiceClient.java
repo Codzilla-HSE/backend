@@ -57,7 +57,14 @@ public class SqlServiceClient {
                     .uri("/sqlservice/submissions/" + submissionId)
                     .retrieve()
                     .body(String.class);
-            return objectMapper.readValue(raw, SubmissionStatus.class);
+
+            JsonNode root = objectMapper.readTree(raw);
+            if (!root.has("success") || !root.get("success").asBoolean()) {
+                String error = root.has("error") ? root.get("error").asText() : "Unknown error";
+                throw new RuntimeException("SqlService error: " + error);
+            }
+            JsonNode data = root.get("data");
+            return objectMapper.treeToValue(data, SubmissionStatus.class);
         } catch (Exception e) {
             throw new RuntimeException("Failed to get SQL submission " + submissionId, e);
         }
