@@ -34,17 +34,17 @@ public class RatingService {
             return;
         }
 
-        Glicko2.Opponent loserSnapshot =
-                new Glicko2.Opponent(loser.getRating().doubleValue(), loser.getRatingDeviation(), 0.0);
-        Glicko2.Opponent winnerSnapshot =
-                new Glicko2.Opponent(winner.getRating().doubleValue(), winner.getRatingDeviation(), 1.0);
+        Glicko2.Opponent loserAsOpponentOfWinner =
+                new Glicko2.Opponent(loser.getRating().doubleValue(),  loser.getRatingDeviation(),  1.0);
+        Glicko2.Opponent winnerAsOpponentOfLoser =
+                new Glicko2.Opponent(winner.getRating().doubleValue(), winner.getRatingDeviation(), 0.0);
 
         Glicko2.Result newWinner = glicko2.update(
                 winner.getRating().doubleValue(), winner.getRatingDeviation(), winner.getVolatility(),
-                List.of(loserSnapshot));
+                List.of(loserAsOpponentOfWinner));
         Glicko2.Result newLoser = glicko2.update(
                 loser.getRating().doubleValue(), loser.getRatingDeviation(), loser.getVolatility(),
-                List.of(winnerSnapshot));
+                List.of(winnerAsOpponentOfLoser));
 
         Instant now = Instant.now();
         applyResult(winner, newWinner, now);
