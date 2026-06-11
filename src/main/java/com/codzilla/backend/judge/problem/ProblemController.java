@@ -52,31 +52,32 @@ public class ProblemController {
     // ── Отправка решений ──────────────────────────────────────────
 
     // POST /problems/{id}/submit — отправить код (тип задачи определяется автоматически)
-    @PostMapping("/{id}/submit")
-    public ResponseEntity<String> submit(
-            @AuthenticationPrincipal User user,
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "62") int languageId,
-            @RequestBody String sourceCode) {
-        UUID userId = user != null
-                ? userService.getIdByEmail(user.getEmail())
-                : UUID.randomUUID();
-        return ResponseEntity.ok(problemService.submitSolution(userId, id, sourceCode, languageId));
-    }
+//    @PostMapping("/{id}/submit")
+//    public ResponseEntity<String> submit(
+//            @AuthenticationPrincipal User user,
+//            @PathVariable Long id,
+//            @RequestParam(defaultValue = "62") int languageId,
+//            @RequestBody String sourceCode) {
+//        UUID userId = user != null
+//                ? userService.getIdByEmail(user.getEmail())
+//                : UUID.randomUUID();
+//        return ResponseEntity.ok(problemService.submitSolution(userId, id, sourceCode, languageId));
+//    }
 
     // POST /problems/{id}/submit/file — отправить файл с кодом
-    @PostMapping(value = "/{id}/submit/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> submitFile(
-            @AuthenticationPrincipal User user,
-            @PathVariable Long id,
-            @RequestParam int languageId,
-            @RequestParam MultipartFile file
-    ) throws IOException {
-        String sourceCode = new String(file.getBytes(), StandardCharsets.UTF_8);
-        UUID userId = userService.getIdByEmail(user.getEmail());
-        return ResponseEntity.ok(
-                problemService.submitSolution(userId, id, sourceCode, languageId));
-    }
+//    @PostMapping(value = "/{id}/submit/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public ResponseEntity<String> submitFile(
+//            @AuthenticationPrincipal User user,
+//            @PathVariable Long id,
+//            @RequestParam int languageId,
+//            @RequestParam MultipartFile file
+//
+//    ) throws IOException {
+//        String sourceCode = new String(file.getBytes(), StandardCharsets.UTF_8);
+//        UUID userId = userService.getIdByEmail(user.getEmail());
+//        return ResponseEntity.ok(
+//                problemService.submitSolution(userId,  id, sourceCode, languageId));
+//    }
 
     @PostMapping(value = "/submit/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> submitFileByMatch(
@@ -103,7 +104,7 @@ public class ProblemController {
         int languageId = Enum.valueOf(Language.class, languageStr).getValue();
         UUID userId = user.getId();
 
-        String result = problemService.submitSolution(userId, problemId, sourceCode, languageId);
+        String result = problemService.submitSolution(userId, matchId  , problemId, sourceCode, languageId);
         return ResponseEntity.ok(result);
     }
 
