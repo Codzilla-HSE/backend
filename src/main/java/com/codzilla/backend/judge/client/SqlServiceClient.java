@@ -25,13 +25,12 @@ public class SqlServiceClient {
                 .build();
     }
 
-    // Отправить SQL-решение → вернуть id посылки в SqlService
     public Long submitSolution(Long taskId, String userId, String query) {
         try {
             SubmitRequest request = new SubmitRequest();
             request.setTaskId(taskId);
             request.setUserId(userId);
-            request.setQuery(query);
+            request.setUserSqlQuery(query); // Исправлено: используем правильный сеттер
 
             String body = objectMapper.writeValueAsString(request);
             String raw = restClient.post()
@@ -49,7 +48,6 @@ public class SqlServiceClient {
         }
     }
 
-    // Получить статус SQL-посылки
     public SubmissionStatus getSubmissionStatus(Long submissionId) {
         try {
             String raw = restClient.get()
@@ -62,18 +60,13 @@ public class SqlServiceClient {
         }
     }
 
-
-    // Получить случайную SQL-задачу по уровню сложности
-
     public RandomSqlTaskResponse getRandomTask(String level) {
         try {
-            // Получаем строку ответа
             String raw = restClient.get()
                     .uri("/sqlservice/tasks/random?level=" + level.toUpperCase())
                     .retrieve()
                     .body(String.class);
 
-            // Парсим обёртку ApiResponse
             JsonNode root = objectMapper.readTree(raw);
             if (!root.get("success").asBoolean()) {
                 String error = root.has("error") ? root.get("error").asText() : "Unknown error";
@@ -91,21 +84,19 @@ public class SqlServiceClient {
         }
     }
 
-    // ── DTOs ──────────────────────────────────────────────────────
-
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class RandomSqlTaskResponse {
-        private Long id;          // externalId задачи в SqlService
+        private Long id;
         private String name;
-        private String level;     // EASY, MEDIUM, HARD
+        private String level;
     }
 
     @Data
     public static class SubmitRequest {
         private Long taskId;
         private String userId;
-        private String query;
+        private String userSqlQuery; // Исправлено: переименовано поле для корректной сериализации в JSON
     }
 
     @Data
