@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.mock.web.MockMultipartFile;
@@ -24,7 +23,8 @@ import java.util.*;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+// 1. Импортируем правильный метод user вместо authentication
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -87,8 +87,7 @@ class ProblemControllerTest {
         match.setProblem(problem);
 
         Map<Category, String> options = new HashMap<>();
-        // Укажите имя языка, которое ТОЧНО есть в enum Language
-        options.put(Category.Language, "JAVA");   // или "Java", смотря как объявлено
+        options.put(Category.Language, "JAVA");
         match.setOptions(options);
     }
 
@@ -98,10 +97,11 @@ class ProblemControllerTest {
         problem.setId(1L);
         problem.setExternalId(517936L);
         problem.setType(ProblemType.ALGORITHM);
-        problem.setLevel(Problem.ProblemLevel.EASY);    // подгоните под реальное имя
+        problem.setLevel(Problem.ProblemLevel.EASY);
 
         when(problemService.createAlgoProblem(any())).thenReturn(problem);
 
+        // 2. Исправлен регистр "Easy" -> "EASY"
         String json = """
         {
             "name": "test-problem",
@@ -110,13 +110,15 @@ class ProblemControllerTest {
             "statement": "Print sum",
             "generatorCode": "generator()",
             "inputs": "1 2",
-            "level": "Easy"
+            "level": "EASY"
         }
         """;
 
         mockMvc.perform(post("/problems/algo")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+                        .content(json)
+                        // 3. Добавляем аутентификацию, иначе контроллер упадет с NPE
+                        .with(user(mockUser)))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("517936")));
     }
@@ -137,7 +139,8 @@ class ProblemControllerTest {
         mockMvc.perform(multipart("/problems/submit/file")
                         .file(file)
                         .param("matchId", matchId.toString())
-                        .with(authentication(new UsernamePasswordAuthenticationToken(mockUser, null, List.of()))))
+                        // 4. Заменяем сырой authentication на корректный user(mockUser)
+                        .with(user(mockUser)))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("token-123")));
     }
