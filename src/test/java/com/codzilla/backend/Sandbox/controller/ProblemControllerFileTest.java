@@ -3,7 +3,7 @@ package com.codzilla.backend.Sandbox.controller;
 import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserService;
-import com.codzilla.backend.controller.Sandbox.problem.*;
+import com.codzilla.backend.judge.problem.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +50,7 @@ class ProblemControllerFileTest {
     private UserService userService;
 
     @MockitoBean
-    private com.codzilla.backend.controller.Sandbox.submission.SubmissionRepository submissionRepository;
+    private com.codzilla.backend.judge.submission.SubmissionRepository submissionRepository;
 
     private User mockUser;
 
@@ -62,7 +62,6 @@ class ProblemControllerFileTest {
                 .nickname("tester")
                 .build();
     }
-
 
     @Test
     void submitFile_shouldWork() throws Exception {

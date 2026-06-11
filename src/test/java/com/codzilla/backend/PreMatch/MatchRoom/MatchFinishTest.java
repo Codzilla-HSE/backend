@@ -1,9 +1,11 @@
 package com.codzilla.backend.PreMatch.MatchRoom;
 
 import com.codzilla.backend.Rating.MatchFinishedEvent;
+import com.codzilla.backend.judge.client.SqlServiceClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -17,19 +19,21 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class MatchFinishTest {
 
-    @Mock private MatchRepository matchRepository;
-    @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock
+    private MatchRepository matchRepository;
 
-    private MatchService buildService() {
-        return new MatchService(
-                matchRepository,
-                null,
-                null,
-                null,
-                null,
-                eventPublisher
-        );
-    }
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private SqlServiceClient sqlServiceClient;
+
+    // Добавьте @Mock для всех остальных зависимостей MatchService, если они есть.
+    // Если каких-то зависимостей нет в тесте, просто объявите их как @Mock – Mockito их создаст.
+    // Пример: @Mock private SomeOtherDependency someOtherDependency;
+
+    @InjectMocks
+    private MatchService matchService;   // ← внедрение всех моков
 
     private Match liveMatch(UUID id, UUID first, UUID second) {
         Match m = new Match(first, second);
@@ -40,7 +44,6 @@ class MatchFinishTest {
 
     @Test
     void firstAccepted_publishesEventWithWinnerAndLoser() {
-        MatchService service = buildService();
         UUID matchId = UUID.randomUUID();
         UUID winner = UUID.randomUUID();
         UUID loser = UUID.randomUUID();
@@ -48,7 +51,7 @@ class MatchFinishTest {
 
         when(matchRepository.findById(matchId)).thenReturn(Optional.of(match));
 
-        boolean finished = service.finishMatch(matchId, winner);
+        boolean finished = matchService.finishMatch(matchId, winner);
 
         assertThat(finished).isTrue();
         assertThat(match.getStatus()).isEqualTo(Match.Status.FINISHED);
@@ -62,7 +65,6 @@ class MatchFinishTest {
 
     @Test
     void secondAccepted_isIdempotent_noSecondEvent() {
-        MatchService service = buildService();
         UUID matchId = UUID.randomUUID();
         UUID winner = UUID.randomUUID();
         UUID loser = UUID.randomUUID();
@@ -70,8 +72,8 @@ class MatchFinishTest {
 
         when(matchRepository.findById(matchId)).thenReturn(Optional.of(match));
 
-        service.finishMatch(matchId, winner);
-        boolean second = service.finishMatch(matchId, loser);
+        matchService.finishMatch(matchId, winner);
+        boolean second = matchService.finishMatch(matchId, loser);
 
         assertThat(second).isFalse();
         verify(eventPublisher, times(1)).publishEvent(any(MatchFinishedEvent.class));

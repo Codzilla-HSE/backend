@@ -1,18 +1,16 @@
 package com.codzilla.backend.Sandbox.controller;
 
 import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
-import com.codzilla.backend.User.User;
+import com.codzilla.backend.PreMatch.model.ProblemType;
 import com.codzilla.backend.User.UserService;
-import com.codzilla.backend.controller.Sandbox.problem.*;
+import com.codzilla.backend.judge.problem.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.UUID;
 
@@ -20,7 +18,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 
 @WebMvcTest(
         controllers = ProblemController.class,
@@ -52,19 +49,20 @@ class ProblemControllerTest {
     private UserService userService;
 
     @MockitoBean
-    private com.codzilla.backend.controller.Sandbox.submission.SubmissionRepository submissionRepository;
-
+    private com.codzilla.backend.judge.submission.SubmissionRepository submissionRepository;
 
     @Test
     void createProblem_shouldReturnSavedProblem() throws Exception {
-
         Problem problem = new Problem();
         problem.setId(1L);
-        problem.setPolygonToken("517936");
-        problem.setType(Problem.ProblemType.ALGORITHM);
+        problem.setExternalId(517936L);
+        problem.setType(ProblemType.ALGORITHM);
         problem.setLevel(Problem.ProblemLevel.EASY);
 
-        when(problemService.createProblem(any())).thenReturn(problem);
+        // контроллер теперь вызывает createAlgoProblem / registerSqlProblem,
+        // поэтому мокаем соответствующий метод. Предположим, что createProblem
+        // всё ещё существует и принимает CreateAlgoProblemRequest
+        when(problemService.createAlgoProblem(any())).thenReturn(problem);
 
         String json = """
         {
@@ -78,15 +76,13 @@ class ProblemControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.polygonToken").value("517936"));
+                .andExpect(jsonPath("$.externalId").value(517936));
     }
-
 
     @Test
     void submit_shouldReturnResult() throws Exception {
-
         when(problemService.submitSolution(any(UUID.class), nullable(UUID.class), anyLong(), anyString(), anyInt()))
-                .thenReturn("Submitted! token-123");
+                .thenReturn("token-123");
 
         mockMvc.perform(post("/problems/1/submit")
                         .param("languageId", "71")
@@ -95,5 +91,4 @@ class ProblemControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("token-123")));
     }
-
 }
