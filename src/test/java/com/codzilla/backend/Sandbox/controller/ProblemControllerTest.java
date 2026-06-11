@@ -2,14 +2,13 @@ package com.codzilla.backend.Sandbox.controller;
 
 import com.codzilla.backend.PreMatch.MatchRoom.Match;
 import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
+import com.codzilla.backend.PreMatch.model.Category;
 import com.codzilla.backend.PreMatch.model.ProblemType;
 import com.codzilla.backend.S3.S3Repository;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserService;
 import com.codzilla.backend.judge.client.SqlServiceClient;
 import com.codzilla.backend.judge.problem.*;
-import com.codzilla.backend.PreMatch.model.Category;
-import com.codzilla.backend.PreMatch.model.Language;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,8 +81,11 @@ class ProblemControllerTest {
         matchId = UUID.randomUUID();
         match = new Match();
         match.setId(matchId);
-        match.setProblem(new Problem());
-        match.getProblem().setId(1L);
+
+        Problem problem = new Problem();
+        problem.setId(1L);
+        match.setProblem(problem);
+
         Map<Category, String> options = new HashMap<>();
         options.put(Category.Language, "PYTHON");
         match.setOptions(options);
@@ -101,12 +103,12 @@ class ProblemControllerTest {
 
         String json = """
         {
-          "name": "test-problem",
-          "timeLimit": 1000,
-          "memoryLimit": 256,
-          "statement": "Print sum",
-          "generatorCode": "generator()",
-          "inputs": "1 2"
+            "name": "test-problem",
+            "timeLimit": 1000,
+            "memoryLimit": 256,
+            "statement": "Print sum",
+            "generatorCode": "generator()",
+            "inputs": "1 2"
         }
         """;
 
