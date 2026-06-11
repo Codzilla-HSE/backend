@@ -14,9 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -167,15 +165,16 @@ public class ProblemService {
      * Получить или создать SQL-задачу
      */
     public Problem getOrCreateRandomSqlProblem(String level) {
-        // Порядок попыток: запрошенный уровень -> MEDIUM -> EASY
-        List<String> levelsToTry = new ArrayList<>();
-        levelsToTry.add(level.toUpperCase());
-        if (!"MEDIUM".equalsIgnoreCase(level)) levelsToTry.add("MEDIUM");
-        if (!"EASY".equalsIgnoreCase(level)) levelsToTry.add("EASY");
+        List<String> levelsToTry = Arrays.asList(level.toUpperCase(), "MEDIUM", "EASY");
+        // используем LinkedHashSet для уникальности и сохранения порядка
+        Set<String> uniqueLevels = new LinkedHashSet<>(levelsToTry);
 
-        for (String lvl : levelsToTry) {
+        for (String lvl : uniqueLevels) {
             try {
+                log.info("Trying to fetch SQL task for level: {}", lvl);
                 SqlServiceClient.RandomSqlTaskResponse external = sqlServiceClient.getRandomTask(lvl);
+                log.info("Fetched SQL task: id={}, name={}, level={}", external.getId(), external.getName(), external.getLevel());
+
                 return problemRepository.findByExternalIdAndType(external.getId(), ProblemType.SQL)
                         .orElseGet(() -> {
                             Problem problem = new Problem();
@@ -183,10 +182,11 @@ public class ProblemService {
                             problem.setExternalId(external.getId());
                             problem.setType(ProblemType.SQL);
                             problem.setLevel(Problem.ProblemLevel.valueOf(external.getLevel().toUpperCase()));
+                            log.info("Saving new SQL problem: {}", problem);
                             return problemRepository.save(problem);
                         });
-            } catch (HttpClientErrorException.NotFound e) {
-                log.warn("No SQL task for level {}, trying next level", lvl);
+            } catch (Exception e) {
+                log.warn("Failed to get SQL task for level {}: {}", lvl, e.getMessage());
             }
         }
         throw new RuntimeException("No SQL tasks found at any level (EASY, MEDIUM, HARD)");

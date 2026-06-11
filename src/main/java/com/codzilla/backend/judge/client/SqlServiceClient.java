@@ -1,6 +1,7 @@
 package com.codzilla.backend.judge.client;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -63,13 +64,28 @@ public class SqlServiceClient {
 
 
     // Получить случайную SQL-задачу по уровню сложности
+
     public RandomSqlTaskResponse getRandomTask(String level) {
         try {
+            // Получаем строку ответа
             String raw = restClient.get()
-                    .uri("/sqlservice/tasks/random?level=" + level) //TODO сделать такую ручку
+                    .uri("/sqlservice/tasks/random?level=" + level.toUpperCase())
                     .retrieve()
                     .body(String.class);
-            return objectMapper.readValue(raw, RandomSqlTaskResponse.class);
+
+            // Парсим обёртку ApiResponse
+            JsonNode root = objectMapper.readTree(raw);
+            if (!root.get("success").asBoolean()) {
+                String error = root.has("error") ? root.get("error").asText() : "Unknown error";
+                throw new RuntimeException("SqlService error: " + error);
+            }
+            JsonNode data = root.get("data");
+
+            RandomSqlTaskResponse response = new RandomSqlTaskResponse();
+            response.setId(data.get("taskId").asLong());
+            response.setName(data.get("title").asText());
+            response.setLevel(data.get("complexity").asText());
+            return response;
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch random SQL task for level " + level, e);
         }
