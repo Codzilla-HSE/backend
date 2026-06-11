@@ -10,6 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 public class SqlServiceClient {
@@ -25,10 +27,11 @@ public class SqlServiceClient {
                 .build();
     }
 
-    public Long submitSolution(Long taskId, String userId, String query) {
+    public Long submitSolution(Long taskId, String userId, String query , UUID matchId) {
         try {
             SubmitRequest request = new SubmitRequest();
             request.setTaskId(taskId);
+            request.setMatchId(matchId);
             request.setUserId(userId);
             request.setUserSqlQuery(query); // Исправлено: используем правильный сеттер
 
@@ -97,6 +100,7 @@ public class SqlServiceClient {
         private Long taskId;
         private String userId;
         private String userSqlQuery; // Исправлено: переименовано поле для корректной сериализации в JSON
+        private UUID matchId;
     }
 
     @Data

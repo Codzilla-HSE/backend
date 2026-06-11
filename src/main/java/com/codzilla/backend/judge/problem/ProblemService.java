@@ -1,6 +1,7 @@
 package com.codzilla.backend.judge.problem;
 
 import com.codzilla.backend.PreMatch.model.ProblemType;
+import com.codzilla.backend.S3.S3Repository;
 import com.codzilla.backend.judge.client.Artefactik0Client;
 import com.codzilla.backend.judge.client.SqlServiceClient;
 import com.codzilla.backend.judge.judge0.Judge0Client;
@@ -27,6 +28,7 @@ public class ProblemService {
     private final SqlServiceClient sqlServiceClient;
     private final SubmissionRepository submissionRepository;
     private final SubmissionTestRepository submissionTestRepository;
+    private final S3Repository s3Repository;
 
     // Создать ALGO-задачу: регистрируем в Artefactik0, сохраняем externalId
     public Problem createAlgoProblem(CreateAlgoProblemRequest request) {
@@ -60,13 +62,13 @@ public class ProblemService {
     }
 
     // Отправить решение — ветвление по типу задачи
-    public String submitSolution(UUID userId, Long problemId, String sourceCode, int languageId) {
+    public String submitSolution(UUID userId, UUID matchId ,  Long problemId, String sourceCode, int languageId) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new RuntimeException("Problem not found: " + problemId));
 
         return switch (problem.getType()) {
-            case ALGORITHM -> submitAlgo(userId, problem, sourceCode, languageId);
-            case SQL  -> submitSql(userId, problem, sourceCode);
+            case ALGORITHM -> submitAlgo(userId, problem, sourceCode, languageId , matchId);
+            case SQL  -> submitSql(userId, problem, sourceCode , matchId);
             //TODO ( не понятно что к чему )
             case MATH -> null;
             case DATA_STRUCTURES -> null;
@@ -74,7 +76,7 @@ public class ProblemService {
     }
 
     // ALGO: тесты из Artefactik0 → каждый тест в Judge0
-    private String submitAlgo(UUID userId, Problem problem, String sourceCode, int languageId) {
+    private String submitAlgo(UUID userId, Problem problem, String sourceCode, int languageId , UUID matchId) {
         List<Artefactik0Client.TestCase> tests =
                 artefactik0Client.getTests(problem.getExternalId());
 
@@ -86,6 +88,7 @@ public class ProblemService {
         Submission sub = new Submission();
         sub.setProblemId(problem.getId());
         sub.setUserId(userId);
+        sub.setMatchId(matchId);
         sub.setLanguageId(languageId);
         sub.setStatus(Submission.Status.IN_QUEUE);
         Submission saved = submissionRepository.save(sub);
@@ -116,14 +119,15 @@ public class ProblemService {
     }
 
     // SQL: полностью делегируем в SqlService
-    private String submitSql(UUID userId, Problem problem, String query) {
+    private String submitSql(UUID userId, Problem problem, String query , UUID matchId) {
         if (query == null || query.isBlank()) {
             throw new RuntimeException("SQL query cannot be empty");
         }
         Long sqlSubmissionId = sqlServiceClient.submitSolution(
                 problem.getExternalId(),
                 userId.toString(),
-                query
+                query,
+                matchId
         );
         log.info("SQL submission delegated, sqlSubmissionId={}", sqlSubmissionId);
         return "sql:" + sqlSubmissionId;
