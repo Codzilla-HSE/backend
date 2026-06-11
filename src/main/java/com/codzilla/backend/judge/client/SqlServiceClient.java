@@ -64,23 +64,18 @@ public class SqlServiceClient {
 
 
     // Получить случайную SQL-задачу по уровню сложности
-
     public RandomSqlTaskResponse getRandomTask(String level) {
         try {
-            // Получаем строку ответа
             String raw = restClient.get()
                     .uri("/sqlservice/tasks/random?level=" + level.toUpperCase())
                     .retrieve()
                     .body(String.class);
-
-            // Парсим обёртку ApiResponse
             JsonNode root = objectMapper.readTree(raw);
             if (!root.get("success").asBoolean()) {
-                String error = root.has("error") ? root.get("error").asText() : "Unknown error";
+                String error = root.path("error").asText("Unknown error");
                 throw new RuntimeException("SqlService error: " + error);
             }
             JsonNode data = root.get("data");
-
             RandomSqlTaskResponse response = new RandomSqlTaskResponse();
             response.setId(data.get("taskId").asLong());
             response.setName(data.get("title").asText());

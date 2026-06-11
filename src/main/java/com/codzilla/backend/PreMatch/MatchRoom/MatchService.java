@@ -67,21 +67,23 @@ public class MatchService {
     public Problem pickProblemOfOptions(Map<Category, String> options) {
         String problemType = options.get(Category.ProblemType);
         String problemLevel = options.getOrDefault(Category.ProblemLevel, "EASY").toUpperCase();
+        log.info("Pick problem of options: type={}, level={}", problemType, problemLevel);
 
-        // 1. Если тип = SQL -> идём в SqlService
         if (problemType != null && problemType.equalsIgnoreCase("SQL")) {
-            return problemService.getOrCreateRandomSqlProblem(problemLevel);
+            log.info("Choosing SQL problem");
+            Problem sqlProblem = problemService.getOrCreateRandomSqlProblem(problemLevel);
+            log.info("Selected SQL problem: id={}, type={}", sqlProblem.getId(), sqlProblem.getType());
+            return sqlProblem;
         }
 
-        // 2. Иначе — алгоритмическая задача (ALGORITHM, DATA_STRUCTURES, MATH)
-        // Пока используем заглушку "ALGORITHM", но в будущем можно передавать реальный тип
-        String algoType = "ALGORITHM"; // заглушка
-        // Если тип пришёл и не SQL, можно попробовать использовать его (для будущей совместимости)
+        // Алгоритмическая задача
+        String algoType = "ALGORITHM";
         if (problemType != null && !problemType.equalsIgnoreCase("SQL")) {
-            // Пока Artefactik0 не поддерживает, но оставим задел
             algoType = problemType;
         }
-        return problemService.getOrCreateRandomAlgoProblem(algoType, problemLevel);
+        Problem algoProblem = problemService.getOrCreateRandomAlgoProblem(algoType, problemLevel);
+        log.info("Selected ALGO problem: id={}, type={}", algoProblem.getId(), algoProblem.getType());
+        return algoProblem;
     }
 
     public Match getMatchById(UUID matchId) {
