@@ -43,14 +43,13 @@ public class SqlServiceClient {
                     .retrieve()
                     .body(String.class);
 
-            // Парсим ApiResponse
+            // SqlService возвращает ApiResponse<Long>, где data — это сразу submissionId
             JsonNode root = objectMapper.readTree(raw);
             if (!root.has("success") || !root.get("success").asBoolean()) {
                 String error = root.has("error") ? root.get("error").asText() : "Unknown error";
                 throw new RuntimeException("SqlService error: " + error);
             }
-            JsonNode data = root.get("data");
-            long id = data.get("id").asLong(); // или treeToValue в SubmitResponse
+            long id = root.get("data").asLong();   // <-- чисто число, а не объект
             log.info("SqlService accepted submission id={}", id);
             return id;
         } catch (Exception e) {
@@ -65,6 +64,7 @@ public class SqlServiceClient {
                     .retrieve()
                     .body(String.class);
 
+            // SqlService возвращает ApiResponse<SubmissionStatusDto>, где data — объект
             JsonNode root = objectMapper.readTree(raw);
             if (!root.has("success") || !root.get("success").asBoolean()) {
                 String error = root.has("error") ? root.get("error").asText() : "Unknown error";
