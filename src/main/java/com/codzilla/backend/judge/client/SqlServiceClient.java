@@ -26,14 +26,13 @@ public class SqlServiceClient {
                 .defaultHeader("Content-Type", "application/json")
                 .build();
     }
-
-    public Long submitSolution(Long taskId, String userId, String query , UUID matchId) {
+    public Long submitSolution(Long taskId, String userId, String query, UUID matchId) {
         try {
             SubmitRequest request = new SubmitRequest();
             request.setTaskId(taskId);
             request.setMatchId(matchId);
             request.setUserId(userId);
-            request.setUserSqlQuery(query); // Исправлено: используем правильный сеттер
+            request.setUserSqlQuery(query);
 
             String body = objectMapper.writeValueAsString(request);
             String raw = restClient.post()
@@ -43,9 +42,27 @@ public class SqlServiceClient {
                     .retrieve()
                     .body(String.class);
 
-            SubmitResponse response = objectMapper.readValue(raw, SubmitResponse.class);
+            log.info("SqlService raw response: {}", raw);
+
+            JsonNode root = objectMapper.readTree(raw);
+
+            // Если обёртка {success, data}
+            if (root.has("success") && root.has("data")) {
+                if (!root.get("success").asBoolean()) {
+                    String error = root.has("error") ? root.get("error").asText() : "Unknown";
+                    throw new RuntimeException("SqlService rejected submission: " + error);
+                }
+                JsonNode data = root.get("data");
+                Long id = data.get("submissionId").asLong();
+                log.info("SqlService accepted submission id={}", id);
+                return id;
+            }
+
+            // Fallback — прямой объект
+            SubmitResponse response = objectMapper.treeToValue(root, SubmitResponse.class);
             log.info("SqlService accepted submission id={}", response.getId());
             return response.getId();
+
         } catch (Exception e) {
             throw new RuntimeException("Failed to submit SQL solution", e);
         }
