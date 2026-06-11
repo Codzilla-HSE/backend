@@ -1,5 +1,6 @@
 package com.codzilla.backend.User;
 
+import com.codzilla.backend.Rating.Glicko2Rating;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,7 +16,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -34,8 +35,17 @@ public class User implements UserDetails, CredentialsContainer {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Builder.Default
+    private Integer rating = (int) Glicko2Rating.DEFAULT_RATING;
 
-    private Integer rating = 100;
+    @Builder.Default
+    private double ratingDeviation = Glicko2Rating.DEFAULT_RD;
+
+    @Builder.Default
+    private double volatility = Glicko2Rating.DEFAULT_VOLATILITY;
+
+    private Instant lastMatchAt;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @JdbcTypeCode(SqlTypes.UUID)
@@ -61,7 +71,6 @@ public class User implements UserDetails, CredentialsContainer {
         return password;
     }
 
-    // returns email
     public String getUsername() {
         return email;
     }

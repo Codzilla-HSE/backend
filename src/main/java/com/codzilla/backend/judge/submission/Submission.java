@@ -27,6 +27,9 @@ public class Submission {
     @JdbcTypeCode(SqlTypes.UUID)
     private UUID userId;
 
+    @JdbcTypeCode(SqlTypes.UUID)
+    private UUID matchId;
+
     @Transient
     private String sourceCode;
 
