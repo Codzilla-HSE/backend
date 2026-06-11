@@ -49,9 +49,9 @@ public class DraftSessionController {
 
     @SubscribeMapping("/match/{matchId}")
     public WebSocketDTO getInitialState(@DestinationVariable UUID matchId) {
-
-
         var draftSession = draftSessionService.findById(matchId);
+
+
         log.info("Subscribed.");
         if (draftSession.isEmpty()) {
             return null;
