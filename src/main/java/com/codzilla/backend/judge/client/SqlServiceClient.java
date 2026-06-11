@@ -27,13 +27,13 @@ public class SqlServiceClient {
                 .build();
     }
 
-    public Long submitSolution(Long taskId, String userId, String query , UUID matchId) {
+    public Long submitSolution(Long taskId, String userId, String query, UUID matchId) {
         try {
             SubmitRequest request = new SubmitRequest();
             request.setTaskId(taskId);
             request.setMatchId(matchId);
             request.setUserId(userId);
-            request.setUserSqlQuery(query); // Исправлено: используем правильный сеттер
+            request.setUserSqlQuery(query);
 
             String body = objectMapper.writeValueAsString(request);
             String raw = restClient.post()
@@ -43,9 +43,16 @@ public class SqlServiceClient {
                     .retrieve()
                     .body(String.class);
 
-            SubmitResponse response = objectMapper.readValue(raw, SubmitResponse.class);
-            log.info("SqlService accepted submission id={}", response.getId());
-            return response.getId();
+            // Парсим ApiResponse
+            JsonNode root = objectMapper.readTree(raw);
+            if (!root.has("success") || !root.get("success").asBoolean()) {
+                String error = root.has("error") ? root.get("error").asText() : "Unknown error";
+                throw new RuntimeException("SqlService error: " + error);
+            }
+            JsonNode data = root.get("data");
+            long id = data.get("id").asLong(); // или treeToValue в SubmitResponse
+            log.info("SqlService accepted submission id={}", id);
+            return id;
         } catch (Exception e) {
             throw new RuntimeException("Failed to submit SQL solution", e);
         }
@@ -106,7 +113,7 @@ public class SqlServiceClient {
     public static class SubmitRequest {
         private Long taskId;
         private String userId;
-        private String userSqlQuery; // Исправлено: переименовано поле для корректной сериализации в JSON
+        private String userSqlQuery;
         private UUID matchId;
     }
 
@@ -115,6 +122,8 @@ public class SqlServiceClient {
     public static class SubmitResponse {
         private Long id;
     }
+
+
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
