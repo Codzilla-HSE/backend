@@ -4,7 +4,6 @@ import com.codzilla.backend.PreMatch.MatchRoom.Match;
 import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import com.codzilla.backend.PreMatch.model.Category;
 import com.codzilla.backend.PreMatch.model.ProblemType;
-import com.codzilla.backend.PreMatch.model.Language;
 import com.codzilla.backend.S3.S3Repository;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserService;
@@ -14,8 +13,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc; // Правильный импорт для Spring Boot 4
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.mock.web.MockMultipartFile;
@@ -24,11 +24,11 @@ import java.util.*;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = ProblemController.class)
-@AutoConfigureMockMvc(addFilters = false) // Полностью отключаем все фильтры
 class ProblemControllerTest {
 
     @MockitoBean
@@ -106,9 +106,17 @@ class ProblemControllerTest {
         }
         """;
 
+        // Создаем Authentication, где principal - наш User объект
+        var auth = new UsernamePasswordAuthenticationToken(
+                mockUser,  // principal - User объект!
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+
         mockMvc.perform(post("/problems/algo")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+                        .content(json)
+                        .with(authentication(auth)))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("517936")));
     }
@@ -126,10 +134,17 @@ class ProblemControllerTest {
                 "print(3)".getBytes()
         );
 
+        // Создаем Authentication, где principal - наш User объект
+        var auth = new UsernamePasswordAuthenticationToken(
+                mockUser,  // principal - User объект!
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+
         mockMvc.perform(multipart("/problems/submit/file")
                         .file(file)
                         .param("matchId", matchId.toString())
-                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                        .with(authentication(auth)))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("token-123")));
     }
