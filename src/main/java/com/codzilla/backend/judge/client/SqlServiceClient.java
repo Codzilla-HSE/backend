@@ -27,14 +27,13 @@ public class SqlServiceClient {
                 .build();
     }
 
-
     public Long submitSolution(Long taskId, String userId, String query , UUID matchId) {
         try {
             SubmitRequest request = new SubmitRequest();
             request.setTaskId(taskId);
             request.setMatchId(matchId);
             request.setUserId(userId);
-            request.setUserSqlQuery(query);
+            request.setUserSqlQuery(query); // Исправлено: используем правильный сеттер
 
             String body = objectMapper.writeValueAsString(request);
             String raw = restClient.post()
