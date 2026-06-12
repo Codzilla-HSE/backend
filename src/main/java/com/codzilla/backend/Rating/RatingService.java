@@ -66,6 +66,8 @@ public class RatingService {
                 matchId,
                 winnerId,
                 loserId,
+                winner.getEmail(),
+                loser.getEmail(),
                 winner.getRating(),
                 Math.abs(winner.getRating() - winnerOldRating),
                 loser.getRating(),

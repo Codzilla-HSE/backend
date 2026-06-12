@@ -57,7 +57,7 @@ public class MatchDeliveryListener {
     @EventListener
     public void handleMatchResult(MatchResultNotifyEvent event) {
         messagingTemplate.convertAndSendToUser(
-                event.winnerId().toString(),
+                event.winnerEmail(),
                 "/queue/match-result",
                 new WebSocketDTO(
                         WebSocketDTO.Status.MATCH_FINISHED,
@@ -66,7 +66,7 @@ public class MatchDeliveryListener {
         );
 
         messagingTemplate.convertAndSendToUser(
-                event.loserId().toString(),
+                event.loserEmail(),
                 "/queue/match-result",
                 new WebSocketDTO(
                         WebSocketDTO.Status.MATCH_FINISHED,
