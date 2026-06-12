@@ -5,9 +5,7 @@ import com.codzilla.backend.judge.judge0.Judge0Client;
 import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.context.ApplicationEventPublisher;
-
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,9 +22,11 @@ public class SubmissionPollingService {
     private final SubmissionRepository submissionRepository;
     private final SubmissionTestRepository submissionTestRepository;
     private final Judge0Client judge0Client;
-    private final SqlServiceClient sqlServiceClient;
     private final ApplicationEventPublisher eventPublisher;
     private final MatchService matchService;
+    private final SqlServiceClient sqlServiceClient;
+
+    // ── ALGO polling (Judge0) ─────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<Submission> getPendingSubmissions() {
@@ -35,13 +35,14 @@ public class SubmissionPollingService {
 
     @Scheduled(fixedDelay = 2000)
     public void pollStatuses() {
+        // Только ALGO посылки — у них sqlSubmissionId == null
         List<SubmissionTest> pending = submissionTestRepository
                 .findAllByStatus(SubmissionTest.Status.IN_QUEUE);
 
         for (SubmissionTest subTest : pending) {
             var response = judge0Client.getSubmissionStatus(subTest.getJudge0Token());
             if (response == null || response.getStatus() == null) continue;
-            if (response.getStatus().getId() <= 2) continue; // ещё обрабатывается
+            if (response.getStatus().getId() <= 2) continue;
 
             updateTestStatus(subTest, response);
             updateSubmissionStatus(subTest.getSubmissionId());
@@ -51,14 +52,12 @@ public class SubmissionPollingService {
     private void updateTestStatus(SubmissionTest subTest, Judge0Client.SubmissionResponse response) {
         int statusId = response.getStatus().getId();
 
-        // Декодируем stdout, если он пришёл в Base64
         String actual = response.getStdout();
         if (actual != null && !actual.isBlank()) {
             try {
                 byte[] decoded = Base64.getDecoder().decode(actual);
                 actual = new String(decoded, StandardCharsets.UTF_8).trim();
             } catch (IllegalArgumentException e) {
-                // Не Base64 — оставляем как есть
                 actual = actual.trim();
             }
         } else {
@@ -73,17 +72,16 @@ public class SubmissionPollingService {
             subTest.setStatus(SubmissionTest.Status.RUNTIME_ERROR);
         } else if (statusId == 3) {
             String expected = subTest.getExpectedOutput() == null ? "" : subTest.getExpectedOutput().trim();
-            if (actual.equals(expected)) {
-                subTest.setStatus(SubmissionTest.Status.ACCEPTED);
-            } else {
-                subTest.setStatus(SubmissionTest.Status.WRONG_ANSWER);
-            }
+            subTest.setStatus(actual.equals(expected)
+                    ? SubmissionTest.Status.ACCEPTED
+                    : SubmissionTest.Status.WRONG_ANSWER);
         } else {
             subTest.setStatus(SubmissionTest.Status.RUNTIME_ERROR);
         }
 
         submissionTestRepository.save(subTest);
-        log.info("Test {} of submission {} → {}", subTest.getTestIndex(), subTest.getSubmissionId(), subTest.getStatus());
+        log.info("Test {} of submission {} → {}",
+                subTest.getTestIndex(), subTest.getSubmissionId(), subTest.getStatus());
     }
 
     private void updateSubmissionStatus(Long submissionId) {
@@ -92,7 +90,6 @@ public class SubmissionPollingService {
 
         boolean allDone = allTests.stream()
                 .allMatch(t -> t.getStatus() != SubmissionTest.Status.IN_QUEUE);
-
         if (!allDone) return;
 
         SubmissionTest firstFailed = allTests.stream()
@@ -128,6 +125,8 @@ public class SubmissionPollingService {
         eventPublisher.publishEvent(new SubmissionUpdatedEvent(sub.getUserId()));
     }
 
+    // ── SQL polling (SqlService) ──────────────────────────────────
+
     @Scheduled(fixedDelay = 2000)
     public void pollSqlStatuses() {
         List<Submission> pendingSql = submissionRepository
@@ -140,10 +139,8 @@ public class SubmissionPollingService {
 
                 if (sqlStatus == null || sqlStatus.getStatus() == null) continue;
 
-                String status = sqlStatus.getStatus();
-
                 // SqlService возвращает PENDING пока обрабатывает
-                if ("PENDING".equals(status)) continue;
+                if ("PENDING".equals(sqlStatus.getStatus())) continue;
 
                 updateSqlSubmissionStatus(sub, sqlStatus);
             } catch (Exception e) {
@@ -152,33 +149,31 @@ public class SubmissionPollingService {
         }
     }
 
-    private void updateSqlSubmissionStatus(Submission sub, SqlServiceClient.SubmissionStatus sqlStatus) {
-        String status = sqlStatus.getStatus();
+    private void updateSqlSubmissionStatus(Submission sub,
+                                           SqlServiceClient.SubmissionStatus sqlStatus) {
         String verdict = sqlStatus.getVerdict();
+        boolean accepted = "ACCEPTED".equals(verdict);
 
-        if ("DONE".equals(status) || "ACCEPTED".equals(status) || "WRONG_ANSWER".equals(status) || "ERROR".equals(status)) {
-            boolean accepted = "ACCEPTED".equals(verdict);
-
-            if (accepted) {
-                sub.setStatus(Submission.Status.ACCEPTED);
-                sub.setResultDetails("Accepted");
-                if (sub.getMatchId() != null) {
-                    matchService.finishMatch(sub.getMatchId(), sub.getUserId());
-                }
-            } else {
-                Submission.Status localStatus = switch (verdict != null ? verdict : "") {
-                    case "WRONG_ANSWER" -> Submission.Status.WRONG_ANSWER;
-                    case "COMPILATION_ERROR" -> Submission.Status.COMPILE_ERROR;
-                    case "TIME_LIMIT_EXCEEDED" -> Submission.Status.RUNTIME_ERROR;
-                    default -> Submission.Status.RUNTIME_ERROR;
-                };
-                sub.setStatus(localStatus);
-                sub.setResultDetails(sqlStatus.getVerdict() != null ? sqlStatus.getVerdict() : "Error");
+        if (accepted) {
+            sub.setStatus(Submission.Status.ACCEPTED);
+            sub.setResultDetails("Accepted");
+            if (sub.getMatchId() != null) {
+                matchService.finishMatch(sub.getMatchId(), sub.getUserId());
             }
-
-            submissionRepository.save(sub);
-            log.info("SQL Submission {} final verdict: {}", sub.getId(), sub.getStatus());
-            eventPublisher.publishEvent(new SubmissionUpdatedEvent(sub.getUserId()));
+        } else {
+            Submission.Status localStatus = switch (verdict != null ? verdict : "") {
+                case "WRONG_ANSWER"        -> Submission.Status.WRONG_ANSWER;
+                case "COMPILATION_ERROR"   -> Submission.Status.COMPILE_ERROR;
+                case "TIME_LIMIT_EXCEEDED" -> Submission.Status.RUNTIME_ERROR;
+                case "SECURITY_VIOLATION"  -> Submission.Status.RUNTIME_ERROR;
+                default                    -> Submission.Status.RUNTIME_ERROR;
+            };
+            sub.setStatus(localStatus);
+            sub.setResultDetails(verdict != null ? verdict : "Error");
         }
+
+        submissionRepository.save(sub);
+        log.info("SQL Submission {} final verdict: {}", sub.getId(), sub.getStatus());
+        eventPublisher.publishEvent(new SubmissionUpdatedEvent(sub.getUserId()));
     }
 }
