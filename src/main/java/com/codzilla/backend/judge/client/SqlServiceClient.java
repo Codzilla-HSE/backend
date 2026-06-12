@@ -27,6 +27,8 @@ public class SqlServiceClient {
                 .build();
     }
 
+
+
     public Long submitSolution(Long taskId, String userId, String query, UUID matchId) {
         try {
             SubmitRequest request = new SubmitRequest();
@@ -43,19 +45,23 @@ public class SqlServiceClient {
                     .retrieve()
                     .body(String.class);
 
-            // SqlService возвращает ApiResponse<Long>, где data — это сразу submissionId
+            log.info("SqlService submit raw response: {}", raw);
+
+
             JsonNode root = objectMapper.readTree(raw);
             if (!root.has("success") || !root.get("success").asBoolean()) {
                 String error = root.has("error") ? root.get("error").asText() : "Unknown error";
                 throw new RuntimeException("SqlService error: " + error);
             }
-            long id = root.get("data").asLong();   // <-- чисто число, а не объект
+            long id = root.get("data").asLong();
             log.info("SqlService accepted submission id={}", id);
             return id;
         } catch (Exception e) {
             throw new RuntimeException("Failed to submit SQL solution", e);
         }
     }
+
+
 
     public SubmissionStatus getSubmissionStatus(Long submissionId) {
         try {
@@ -64,7 +70,9 @@ public class SqlServiceClient {
                     .retrieve()
                     .body(String.class);
 
-            // SqlService возвращает ApiResponse<SubmissionStatusDto>, где data — объект
+            log.debug("SqlService status raw response: {}", raw);
+
+
             JsonNode root = objectMapper.readTree(raw);
             if (!root.has("success") || !root.get("success").asBoolean()) {
                 String error = root.has("error") ? root.get("error").asText() : "Unknown error";
@@ -76,6 +84,8 @@ public class SqlServiceClient {
             throw new RuntimeException("Failed to get SQL submission " + submissionId, e);
         }
     }
+
+
 
     public RandomSqlTaskResponse getRandomTask(String level) {
         try {
@@ -101,6 +111,8 @@ public class SqlServiceClient {
         }
     }
 
+
+
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class RandomSqlTaskResponse {
@@ -123,12 +135,10 @@ public class SqlServiceClient {
         private Long id;
     }
 
-
-
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SubmissionStatus {
-        private Long id;
+        private Long submissionId;
         private String status;
         private String verdict;
         private Long executionTimeMs;

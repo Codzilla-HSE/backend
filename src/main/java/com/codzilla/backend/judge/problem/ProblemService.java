@@ -30,7 +30,7 @@ public class ProblemService {
     private final SubmissionTestRepository submissionTestRepository;
     private final S3Repository s3Repository;
 
-    // Создать ALGO-задачу: регистрируем в Artefactik0, сохраняем externalId
+
     public Problem createAlgoProblem(CreateAlgoProblemRequest request) {
         Artefactik0Client.CreateProblemRequest artefaktRequest =
                 new Artefactik0Client.CreateProblemRequest();
@@ -51,7 +51,7 @@ public class ProblemService {
         return problemRepository.save(problem);
     }
 
-    // Зарегистрировать SQL-задачу: задача уже есть в SqlService, просто сохраняем ссылку
+
     public Problem registerSqlProblem(RegisterSqlProblemRequest request) {
         Problem problem = new Problem();
         problem.setName(request.getName());
@@ -61,7 +61,7 @@ public class ProblemService {
         return problemRepository.save(problem);
     }
 
-    // Отправить решение — ветвление по типу задачи
+
     public String submitSolution(UUID userId, UUID matchId ,  Long problemId, String sourceCode, int languageId) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new RuntimeException("Problem not found: " + problemId));
@@ -69,13 +69,13 @@ public class ProblemService {
         return switch (problem.getType()) {
             case ALGORITHM -> submitAlgo(userId, problem, sourceCode, languageId , matchId);
             case SQL  -> submitSql(userId, problem, sourceCode , matchId);
-            //TODO ( не понятно что к чему )
+
             case MATH -> null;
             case DATA_STRUCTURES -> null;
         };
     }
 
-    // ALGO: тесты из Artefactik0 → каждый тест в Judge0
+
     private String submitAlgo(UUID userId, Problem problem, String sourceCode, int languageId , UUID matchId) {
         List<Artefactik0Client.TestCase> tests =
                 artefactik0Client.getTests(problem.getExternalId());
@@ -118,7 +118,7 @@ public class ProblemService {
         return saved.getId().toString();
     }
 
-    // SQL: полностью делегируем в SqlService
+
     private String submitSql(UUID userId, Problem problem, String query, UUID matchId) {
         if (query == null || query.isBlank()) {
             throw new RuntimeException("SQL query cannot be empty");
@@ -132,18 +132,17 @@ public class ProblemService {
         );
         log.info("SQL submission delegated, sqlSubmissionId={}", sqlSubmissionId);
 
-        // Создаём локальную запись — чтобы polling и SubmissionController работали
         Submission sub = new Submission();
         sub.setProblemId(problem.getId());
         sub.setUserId(userId);
         sub.setMatchId(matchId);
-        sub.setLanguageId(0); // SQL не имеет languageId
+        sub.setLanguageId(0);
         sub.setStatus(Submission.Status.IN_QUEUE);
-        sub.setSqlSubmissionId(sqlSubmissionId); // новое поле — см. ниже
+        sub.setSqlSubmissionId(sqlSubmissionId);
         Submission saved = submissionRepository.save(sub);
 
         log.info("Local SQL submission {} created, sqlSubmissionId={}", saved.getId(), sqlSubmissionId);
-        return saved.getId().toString(); // возвращаем локальный id, не "sql:123"
+        return saved.getId().toString();
     }
 
     /**
@@ -153,11 +152,9 @@ public class ProblemService {
      */
     @Transactional
     public Problem getOrCreateRandomAlgoProblem(String type, String level) {
-        // 1. Запросить случайную задачу из Artefactik0
         Artefactik0Client.RandomProblemResponse external =
                 artefactik0Client.getRandomProblem(type, level);
 
-        // 2. Преобразовать строковый тип в enum (пока заглушка -> ALGORITHM)
         ProblemType problemType;
         try {
             problemType = ProblemType.valueOf(type.toUpperCase());
@@ -165,7 +162,6 @@ public class ProblemService {
             problemType = ProblemType.ALGORITHM;
         }
 
-        // 3. Поиск в локальной БД
         ProblemType finalProblemType = problemType;
         return problemRepository.findByExternalIdAndType(external.getId(), problemType)
                 .orElseGet(() -> {
@@ -185,7 +181,7 @@ public class ProblemService {
      */
     public Problem getOrCreateRandomSqlProblem(String level) {
         List<String> levelsToTry = Arrays.asList(level.toUpperCase(), "MEDIUM", "EASY");
-        // используем LinkedHashSet для уникальности и сохранения порядка
+
         Set<String> uniqueLevels = new LinkedHashSet<>(levelsToTry);
 
         for (String lvl : uniqueLevels) {

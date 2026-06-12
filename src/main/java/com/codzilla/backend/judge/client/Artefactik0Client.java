@@ -28,7 +28,6 @@ public class Artefactik0Client {
                 .build();
     }
 
-    // Создать задачу в Artefactik0, вернуть её id
     public Long createProblem(CreateProblemRequest request) {
         try {
             String body = objectMapper.writeValueAsString(request);
@@ -47,10 +46,9 @@ public class Artefactik0Client {
         }
     }
 
-    // Получить тесты задачи по её id в Artefactik0
     public List<TestCase> getTests(Long problemId) {
         try {
-            // Используем ParameterizedTypeReference для получения списка
+
             List<TestCase> tests = restClient.get()
                     .uri("/api/problems/" + problemId + "/tests")
                     .retrieve()
@@ -73,7 +71,7 @@ public class Artefactik0Client {
      */
     public RandomProblemResponse getRandomProblem(String type, String level) {
         try {
-            // Пока type не поддерживается, но передаём для будущей совместимости
+
             String uri = UriComponentsBuilder.fromPath("/api/problems/random")
                     .queryParam("type", type.toUpperCase())
                     .queryParam("complexity", level.toUpperCase())
@@ -89,16 +87,13 @@ public class Artefactik0Client {
         }
     }
 
-    // ── DTOs ──────────────────────────────────────────────────────
 
-
-    // DTO для ответа (только нужные поля)
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class RandomProblemResponse {
         private Long id;
         private String name;
-        private String level;   // EASY, MEDIUM, HARD
+        private String level;
     }
 
     @Data
