@@ -67,11 +67,8 @@ public class ProblemService {
                 .orElseThrow(() -> new RuntimeException("Problem not found: " + problemId));
 
         return switch (problem.getType()) {
-            case ALGORITHM -> submitAlgo(userId, problem, sourceCode, languageId , matchId);
+            case ALGORITHM, MATH, DATA_STRUCTURES -> submitAlgo(userId, problem, sourceCode, languageId , matchId);
             case SQL  -> submitSql(userId, problem, sourceCode , matchId);
-
-            case MATH -> null;
-            case DATA_STRUCTURES -> null;
         };
     }
 
@@ -154,10 +151,11 @@ public class ProblemService {
     public Problem getOrCreateRandomAlgoProblem(String type, String level) {
         Artefactik0Client.RandomProblemResponse external =
                 artefactik0Client.getRandomProblem(type, level);
-
         ProblemType problemType;
         try {
-            problemType = ProblemType.valueOf(type.toUpperCase());
+            problemType = ProblemType.valueOf(
+                    external.getType() != null ? external.getType().toUpperCase() : type.toUpperCase()
+            );
         } catch (IllegalArgumentException e) {
             problemType = ProblemType.ALGORITHM;
         }
@@ -169,9 +167,10 @@ public class ProblemService {
                     problem.setName(external.getName());
                     problem.setExternalId(external.getId());
                     problem.setType(finalProblemType);
-                    problem.setLevel(Problem.ProblemLevel.valueOf(external.getLevel().toUpperCase()));
-                    log.info("Created new ALGO problem in local DB: id={}, externalId={}",
-                            problem.getId(), problem.getExternalId());
+                    problem.setLevel(Problem.ProblemLevel.valueOf(
+                            external.getLevel().toUpperCase()));
+                    log.info("Created new {} problem in local DB: externalId={}",
+                            finalProblemType, problem.getExternalId());
                     return problemRepository.save(problem);
                 });
     }
