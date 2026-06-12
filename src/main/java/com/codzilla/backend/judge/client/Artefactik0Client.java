@@ -94,6 +94,7 @@ public class Artefactik0Client {
         private Long id;
         private String name;
         private String level;
+        private String type;
     }
 
     @Data
