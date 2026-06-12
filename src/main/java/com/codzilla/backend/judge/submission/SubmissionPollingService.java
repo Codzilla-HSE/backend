@@ -26,7 +26,6 @@ public class SubmissionPollingService {
     private final MatchService matchService;
     private final SqlServiceClient sqlServiceClient;
 
-    // ── ALGO polling (Judge0) ─────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<Submission> getPendingSubmissions() {
@@ -35,7 +34,6 @@ public class SubmissionPollingService {
 
     @Scheduled(fixedDelay = 2000)
     public void pollStatuses() {
-        // Только ALGO посылки — у них sqlSubmissionId == null
         List<SubmissionTest> pending = submissionTestRepository
                 .findAllByStatus(SubmissionTest.Status.IN_QUEUE);
 
@@ -125,8 +123,6 @@ public class SubmissionPollingService {
         eventPublisher.publishEvent(new SubmissionUpdatedEvent(sub.getUserId()));
     }
 
-    // ── SQL polling (SqlService) ──────────────────────────────────
-
     @Scheduled(fixedDelay = 2000)
     public void pollSqlStatuses() {
         List<Submission> pendingSql = submissionRepository
@@ -139,7 +135,6 @@ public class SubmissionPollingService {
 
                 if (sqlStatus == null || sqlStatus.getStatus() == null) continue;
 
-                // SqlService возвращает PENDING пока обрабатывает
                 if ("PENDING".equals(sqlStatus.getStatus())) continue;
 
                 updateSqlSubmissionStatus(sub, sqlStatus);

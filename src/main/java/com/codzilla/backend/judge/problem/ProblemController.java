@@ -33,51 +33,17 @@ public class ProblemController {
     private final SqlServiceClient sqlServiceClient;
     private final MatchService matchService;
 
-    // ── Создание задач ────────────────────────────────────────────
-
-    // POST /problems/algo — создать алго-задачу (регистрирует в Artefactik0)
     @PostMapping("/algo")
     public ResponseEntity<Problem> createAlgoProblem(
             @RequestBody CreateAlgoProblemRequest request) {
         return ResponseEntity.ok(problemService.createAlgoProblem(request));
     }
 
-    // POST /problems/sql — зарегистрировать SQL-задачу (уже созданную в SqlService)
     @PostMapping("/sql")
     public ResponseEntity<Problem> registerSqlProblem(
             @RequestBody RegisterSqlProblemRequest request) {
         return ResponseEntity.ok(problemService.registerSqlProblem(request));
     }
-
-    // ── Отправка решений ──────────────────────────────────────────
-
-    // POST /problems/{id}/submit — отправить код (тип задачи определяется автоматически)
-//    @PostMapping("/{id}/submit")
-//    public ResponseEntity<String> submit(
-//            @AuthenticationPrincipal User user,
-//            @PathVariable Long id,
-//            @RequestParam(defaultValue = "62") int languageId,
-//            @RequestBody String sourceCode) {
-//        UUID userId = user != null
-//                ? userService.getIdByEmail(user.getEmail())
-//                : UUID.randomUUID();
-//        return ResponseEntity.ok(problemService.submitSolution(userId, id, sourceCode, languageId));
-//    }
-
-    // POST /problems/{id}/submit/file — отправить файл с кодом
-//    @PostMapping(value = "/{id}/submit/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-//    public ResponseEntity<String> submitFile(
-//            @AuthenticationPrincipal User user,
-//            @PathVariable Long id,
-//            @RequestParam int languageId,
-//            @RequestParam MultipartFile file
-//
-//    ) throws IOException {
-//        String sourceCode = new String(file.getBytes(), StandardCharsets.UTF_8);
-//        UUID userId = userService.getIdByEmail(user.getEmail());
-//        return ResponseEntity.ok(
-//                problemService.submitSolution(userId,  id, sourceCode, languageId));
-//    }
 
     @PostMapping(value = "/submit/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> submitFileByMatch(
@@ -90,7 +56,6 @@ public class ProblemController {
             return ResponseEntity.badRequest().body("Match not found");
         }
 
-        // Читаем файл
         String sourceCode = new String(file.getBytes(), StandardCharsets.UTF_8);
         log.info("Received file for match {}: size={}, content (first 100 chars): {}",
                 matchId, sourceCode.length(), sourceCode.substring(0, Math.min(100, sourceCode.length())));
@@ -108,11 +73,6 @@ public class ProblemController {
         return ResponseEntity.ok(result);
     }
 
-    // ── Статус посылки ────────────────────────────────────────────
-
-    // GET /problems/submissions/{ref}/status
-    // ref = "123"      → ALGO-посылка, смотрим в локальной БД
-    // ref = "sql:123"  → SQL-посылка, проксируем в SqlService
     @GetMapping("/submissions/{submissionRef}/status")
     public ResponseEntity<String> getStatus(@PathVariable String submissionRef) {
 

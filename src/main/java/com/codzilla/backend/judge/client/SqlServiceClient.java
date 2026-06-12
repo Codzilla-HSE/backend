@@ -27,7 +27,7 @@ public class SqlServiceClient {
                 .build();
     }
 
-    // ── Submit ────────────────────────────────────────────────────
+
 
     public Long submitSolution(Long taskId, String userId, String query, UUID matchId) {
         try {
@@ -47,7 +47,7 @@ public class SqlServiceClient {
 
             log.info("SqlService submit raw response: {}", raw);
 
-            // SqlService возвращает ApiResponse<Long> где data — сразу число
+
             JsonNode root = objectMapper.readTree(raw);
             if (!root.has("success") || !root.get("success").asBoolean()) {
                 String error = root.has("error") ? root.get("error").asText() : "Unknown error";
@@ -61,7 +61,7 @@ public class SqlServiceClient {
         }
     }
 
-    // ── Status ────────────────────────────────────────────────────
+
 
     public SubmissionStatus getSubmissionStatus(Long submissionId) {
         try {
@@ -72,7 +72,7 @@ public class SqlServiceClient {
 
             log.debug("SqlService status raw response: {}", raw);
 
-            // SqlService возвращает ApiResponse<SubmissionStatusDto>
+
             JsonNode root = objectMapper.readTree(raw);
             if (!root.has("success") || !root.get("success").asBoolean()) {
                 String error = root.has("error") ? root.get("error").asText() : "Unknown error";
@@ -85,7 +85,7 @@ public class SqlServiceClient {
         }
     }
 
-    // ── Random task ───────────────────────────────────────────────
+
 
     public RandomSqlTaskResponse getRandomTask(String level) {
         try {
@@ -111,7 +111,7 @@ public class SqlServiceClient {
         }
     }
 
-    // ── DTOs ──────────────────────────────────────────────────────
+
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -138,7 +138,7 @@ public class SqlServiceClient {
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SubmissionStatus {
-        private Long submissionId;  // SqlService возвращает submissionId, не id
+        private Long submissionId;
         private String status;
         private String verdict;
         private Long executionTimeMs;
