@@ -1,11 +1,14 @@
 package com.codzilla.backend.Rating;
 
+import com.codzilla.backend.PreMatch.events.MatchResultNotifyEvent;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +21,9 @@ class RatingServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     private User newUser(UUID id, int rating) {
         User u = User.builder()
@@ -32,7 +38,7 @@ class RatingServiceTest {
 
     @Test
     void matchFinishedEvent_winnerGains_loserLoses() {
-        RatingService service = new RatingService(userRepository);
+        RatingService service = new RatingService(userRepository, eventPublisher);
 
         UUID winnerId = UUID.randomUUID();
         UUID loserId = UUID.randomUUID();
@@ -60,8 +66,37 @@ class RatingServiceTest {
     }
 
     @Test
+    void matchFinishedEvent_publishesNotifyEventWithEmailsAndDeltas() {
+        RatingService service = new RatingService(userRepository, eventPublisher);
+
+        UUID winnerId = UUID.randomUUID();
+        UUID loserId = UUID.randomUUID();
+        User winner = newUser(winnerId, 1500);
+        User loser = newUser(loserId, 1500);
+
+        when(userRepository.findById(winnerId)).thenReturn(Optional.of(winner));
+        when(userRepository.findById(loserId)).thenReturn(Optional.of(loser));
+
+        service.onMatchFinished(new MatchFinishedEvent(UUID.randomUUID(), winnerId, loserId));
+
+        ArgumentCaptor<MatchResultNotifyEvent> captor =
+                ArgumentCaptor.forClass(MatchResultNotifyEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        MatchResultNotifyEvent published = captor.getValue();
+
+        assertThat(published.winnerEmail()).isEqualTo(winner.getEmail());
+        assertThat(published.loserEmail()).isEqualTo(loser.getEmail());
+
+        assertThat(published.winnerNewRating()).isEqualTo(winner.getRating());
+        assertThat(published.loserNewRating()).isEqualTo(loser.getRating());
+
+        assertThat(published.winnerRatingDelta()).isEqualTo(162);
+        assertThat(published.loserRatingDelta()).isEqualTo(162);
+    }
+
+    @Test
     void unknownUser_skipsWithoutSaving() {
-        RatingService service = new RatingService(userRepository);
+        RatingService service = new RatingService(userRepository, eventPublisher);
         UUID winnerId = UUID.randomUUID();
         UUID loserId = UUID.randomUUID();
 
@@ -71,5 +106,6 @@ class RatingServiceTest {
         service.onMatchFinished(new MatchFinishedEvent(UUID.randomUUID(), winnerId, loserId));
 
         verify(userRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
     }
 }

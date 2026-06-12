@@ -11,7 +11,8 @@ public class WebSocketDTO {
     public enum Status {
         MATCH_STARTED_REDIRECT,
         DRAFT,
-        LIVE
+        LIVE,
+        MATCH_FINISHED
     }
 
     public WebSocketDTO(Status status, Object payload) {

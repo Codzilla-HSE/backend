@@ -1,9 +1,11 @@
 package com.codzilla.backend.Rating;
 
+import com.codzilla.backend.PreMatch.events.MatchResultNotifyEvent;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,21 +20,25 @@ import java.util.UUID;
 public class RatingService {
 
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
     private final Glicko2 glicko2 = new Glicko2();
 
     @EventListener
     @Transactional
     public void onMatchFinished(MatchFinishedEvent event) {
-        recalculate(event.winnerId(), event.loserId());
+        recalculate(event.matchId(), event.winnerId(), event.loserId());
     }
 
-    public void recalculate(UUID winnerId, UUID loserId) {
+    public void recalculate(UUID matchId, UUID winnerId, UUID loserId) {
         User winner = userRepository.findById(winnerId).orElse(null);
         User loser = userRepository.findById(loserId).orElse(null);
         if (winner == null || loser == null) {
             log.warn("Skip rating update, user not found: winner={}, loser={}", winnerId, loserId);
             return;
         }
+
+        int winnerOldRating = winner.getRating();
+        int loserOldRating  = loser.getRating();
 
         Glicko2.Opponent loserAsOpponentOfWinner =
                 new Glicko2.Opponent(loser.getRating().doubleValue(),  loser.getRatingDeviation(),  1.0);
@@ -55,6 +61,18 @@ public class RatingService {
 
         log.info("Rating updated: winner {} -> {}, loser {} -> {}",
                 winnerId, winner.getRating(), loserId, loser.getRating());
+
+        eventPublisher.publishEvent(new MatchResultNotifyEvent(
+                matchId,
+                winnerId,
+                loserId,
+                winner.getEmail(),
+                loser.getEmail(),
+                winner.getRating(),
+                Math.abs(winner.getRating() - winnerOldRating),
+                loser.getRating(),
+                Math.abs(loser.getRating() - loserOldRating)
+        ));
     }
 
     private void applyResult(User user, Glicko2.Result r, Instant now) {

@@ -1,8 +1,9 @@
 package com.codzilla.backend.PreMatch;
 
 import com.codzilla.backend.PreMatch.DTO.DraftSessionResponseDTO;
+import com.codzilla.backend.PreMatch.DTO.MatchResultDTO;
 import com.codzilla.backend.PreMatch.DTO.WebSocketDTO;
-import com.codzilla.backend.PreMatch.MatchRoom.Match;
+import com.codzilla.backend.PreMatch.events.MatchResultNotifyEvent;
 import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import com.codzilla.backend.PreMatch.events.DraftSessionFinishedEvent;
 import com.codzilla.backend.PreMatch.events.DraftSessionUpdatedEvent;
@@ -48,6 +49,28 @@ public class MatchDeliveryListener {
                 new WebSocketDTO(
                         WebSocketDTO.Status.MATCH_STARTED_REDIRECT,
                         null
+                )
+        );
+    }
+
+    @Async
+    @EventListener
+    public void handleMatchResult(MatchResultNotifyEvent event) {
+        messagingTemplate.convertAndSendToUser(
+                event.winnerEmail(),
+                "/queue/match-result",
+                new WebSocketDTO(
+                        WebSocketDTO.Status.MATCH_FINISHED,
+                        new MatchResultDTO("WIN", event.winnerNewRating(), event.winnerRatingDelta())
+                )
+        );
+
+        messagingTemplate.convertAndSendToUser(
+                event.loserEmail(),
+                "/queue/match-result",
+                new WebSocketDTO(
+                        WebSocketDTO.Status.MATCH_FINISHED,
+                        new MatchResultDTO("LOSE", event.loserNewRating(), event.loserRatingDelta())
                 )
         );
     }
