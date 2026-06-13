@@ -33,24 +33,6 @@ public class ProblemController {
     private final SqlServiceClient sqlServiceClient;
     private final MatchService matchService;
 
-    @GetMapping("/by-match/{matchId}")
-    public ResponseEntity<ProblemInfoDTO> getProblemByMatch(@PathVariable UUID matchId) {
-        Match match = matchService.getMatchById(matchId);
-        if (match == null || match.getProblem() == null) {
-            return ResponseEntity.notFound().build();
-        }
-        Problem problem = match.getProblem();
-
-        ProblemInfoDTO dto = new ProblemInfoDTO();
-        dto.setId(problem.getId());
-        dto.setName(problem.getName());
-        dto.setExternalId(problem.getExternalId());
-        dto.setType(problem.getType().name());
-        dto.setLevel(problem.getLevel() != null ? problem.getLevel().name() : "EASY");
-
-        return ResponseEntity.ok(dto);
-    }
-
     @PostMapping("/algo")
     public ResponseEntity<Problem> createAlgoProblem(
             @RequestBody CreateAlgoProblemRequest request) {
