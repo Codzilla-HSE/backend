@@ -1,5 +1,8 @@
 package com.codzilla.backend.PreMatch.MatchRoom;
 
+import com.codzilla.backend.MatchRoom.Match;
+import com.codzilla.backend.MatchRoom.MatchRepository;
+import com.codzilla.backend.MatchRoom.MatchService;
 import com.codzilla.backend.Rating.MatchFinishedEvent;
 import com.codzilla.backend.judge.client.SqlServiceClient;
 import org.junit.jupiter.api.Test;

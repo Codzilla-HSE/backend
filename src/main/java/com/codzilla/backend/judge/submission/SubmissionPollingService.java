@@ -2,7 +2,7 @@ package com.codzilla.backend.judge.submission;
 
 import com.codzilla.backend.judge.client.SqlServiceClient;
 import com.codzilla.backend.judge.judge0.Judge0Client;
-import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
+import com.codzilla.backend.MatchRoom.MatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -120,7 +120,7 @@ public class SubmissionPollingService {
 
         submissionRepository.save(sub);
         log.info("Submission {} final verdict: {}", submissionId, sub.getStatus());
-        eventPublisher.publishEvent(new SubmissionUpdatedEvent(sub.getUserId()));
+        eventPublisher.publishEvent(new SubmissionUpdatedEvent(sub));
     }
 
     @Scheduled(fixedDelay = 2000)
@@ -169,6 +169,6 @@ public class SubmissionPollingService {
 
         submissionRepository.save(sub);
         log.info("SQL Submission {} final verdict: {}", sub.getId(), sub.getStatus());
-        eventPublisher.publishEvent(new SubmissionUpdatedEvent(sub.getUserId()));
+        eventPublisher.publishEvent(new SubmissionUpdatedEvent(sub));
     }
 }

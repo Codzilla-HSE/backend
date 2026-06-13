@@ -2,7 +2,7 @@ package com.codzilla.backend.Matchmaking;
 
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserRepository;
-import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
+import com.codzilla.backend.MatchRoom.MatchService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

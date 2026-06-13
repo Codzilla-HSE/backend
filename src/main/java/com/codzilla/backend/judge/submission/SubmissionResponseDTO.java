@@ -1,6 +1,7 @@
 package com.codzilla.backend.judge.submission;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record SubmissionResponseDTO(
         Long id,
@@ -9,7 +10,8 @@ public record SubmissionResponseDTO(
         String status,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        String resultDetails
+        String resultDetails,
+        UUID userId
 ) {
     public static SubmissionResponseDTO fromEntity(Submission submission) {
         return new SubmissionResponseDTO(

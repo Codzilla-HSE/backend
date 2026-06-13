@@ -14,4 +14,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<Submission> findAllByStatusAndSqlSubmissionIdIsNotNull(Submission.Status status);
     List<Submission> findAllByUserIdOrderByCreatedAtDesc(UUID userId);
     Optional<Submission> findFirstByUserIdOrderByUpdatedAtDesc(UUID userId);
+
+    List<Submission> findByMatchIdAndStatusNotIn(UUID matchId, List<Submission.Status> statuses);
 }

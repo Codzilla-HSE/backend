@@ -1,4 +1,4 @@
-package com.codzilla.backend.PreMatch.MatchRoom;
+package com.codzilla.backend.MatchRoom;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

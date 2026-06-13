@@ -1,4 +1,4 @@
-package com.codzilla.backend.PreMatch.MatchRoom;
+package com.codzilla.backend.MatchRoom;
 
 import com.codzilla.backend.PreMatch.DraftSession.DraftSession;
 import com.codzilla.backend.PreMatch.model.Category;

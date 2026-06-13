@@ -16,7 +16,7 @@ public class MatchSettings {
     Duration timeToPick;
     String websocketMatchPrefix;
 
-    String getWebSocketMatchDestination(UUID matchId) {
+    public String getWebSocketMatchDestination(UUID matchId) {
         return websocketMatchPrefix + matchId;
     }
 }

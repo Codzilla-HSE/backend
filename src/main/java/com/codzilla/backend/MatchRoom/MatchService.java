@@ -1,14 +1,11 @@
-package com.codzilla.backend.PreMatch.MatchRoom;
+package com.codzilla.backend.MatchRoom;
 
 import com.codzilla.backend.Rating.MatchFinishedEvent;
-import com.codzilla.backend.PreMatch.DTO.WebSocketDTO;
 import com.codzilla.backend.PreMatch.DraftSession.DraftSession;
 import com.codzilla.backend.PreMatch.DraftSession.DraftSessionService;
 import com.codzilla.backend.PreMatch.MatchSettings;
-import com.codzilla.backend.PreMatch.events.DraftSessionFinishedEvent;
 import com.codzilla.backend.PreMatch.model.Category;
 import com.codzilla.backend.PreMatch.model.Language;
-import com.codzilla.backend.PreMatch.model.ProblemType;
 import com.codzilla.backend.judge.client.SqlServiceClient;
 import com.codzilla.backend.judge.problem.Problem;
 import com.codzilla.backend.judge.problem.ProblemRepository;
@@ -16,11 +13,8 @@ import com.codzilla.backend.judge.problem.ProblemService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Instant;
