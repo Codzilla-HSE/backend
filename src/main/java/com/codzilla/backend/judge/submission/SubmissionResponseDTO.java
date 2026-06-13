@@ -21,7 +21,8 @@ public record SubmissionResponseDTO(
                 submission.getStatus().name(),
                 submission.getCreatedAt(),
                 submission.getUpdatedAt(),
-                submission.getResultDetails()
+                submission.getResultDetails(),
+                submission.getUserId()
         );
     }
 }
