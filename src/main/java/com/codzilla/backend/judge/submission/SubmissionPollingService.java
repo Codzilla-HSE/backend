@@ -53,9 +53,11 @@ public class SubmissionPollingService {
         String actual = response.getStdout();
         if (actual != null && !actual.isBlank()) {
             try {
+                actual = actual.trim();
                 byte[] decoded = Base64.getDecoder().decode(actual);
                 actual = new String(decoded, StandardCharsets.UTF_8).trim();
             } catch (IllegalArgumentException e) {
+                log.info("Cannot decode output!");
                 actual = actual.trim();
             }
         } else {
@@ -70,16 +72,17 @@ public class SubmissionPollingService {
             subTest.setStatus(SubmissionTest.Status.RUNTIME_ERROR);
         } else if (statusId == 3) {
             String expected = subTest.getExpectedOutput() == null ? "" : subTest.getExpectedOutput().trim();
+            log.info("Actual output is {}, expected : {}", actual, expected);
             subTest.setStatus(actual.equals(expected)
-                    ? SubmissionTest.Status.ACCEPTED
-                    : SubmissionTest.Status.WRONG_ANSWER);
+                                      ? SubmissionTest.Status.ACCEPTED
+                                      : SubmissionTest.Status.WRONG_ANSWER);
         } else {
             subTest.setStatus(SubmissionTest.Status.RUNTIME_ERROR);
         }
 
         submissionTestRepository.save(subTest);
         log.info("Test {} of submission {} → {}",
-                subTest.getTestIndex(), subTest.getSubmissionId(), subTest.getStatus());
+                 subTest.getTestIndex(), subTest.getSubmissionId(), subTest.getStatus());
     }
 
     private void updateSubmissionStatus(Long submissionId) {
@@ -87,13 +90,13 @@ public class SubmissionPollingService {
                 .findAllBySubmissionIdOrderByTestIndex(submissionId);
 
         boolean allDone = allTests.stream()
-                .allMatch(t -> t.getStatus() != SubmissionTest.Status.IN_QUEUE);
+                                  .allMatch(t -> t.getStatus() != SubmissionTest.Status.IN_QUEUE);
         if (!allDone) return;
 
         SubmissionTest firstFailed = allTests.stream()
-                .filter(t -> t.getStatus() != SubmissionTest.Status.ACCEPTED)
-                .findFirst()
-                .orElse(null);
+                                             .filter(t -> t.getStatus() != SubmissionTest.Status.ACCEPTED)
+                                             .findFirst()
+                                             .orElse(null);
 
         Submission sub = submissionRepository.findById(submissionId).orElse(null);
         if (sub == null) return;

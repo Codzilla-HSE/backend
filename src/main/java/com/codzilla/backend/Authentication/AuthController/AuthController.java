@@ -1,13 +1,10 @@
 package com.codzilla.backend.Authentication.AuthController;
 
 import com.codzilla.backend.Authentication.JWTUtils.JWTUtils;
+import com.codzilla.backend.Authentication.dto.*;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserService;
 import com.codzilla.backend.Authentication.config.AuthSettings;
-import com.codzilla.backend.Authentication.dto.LoginRequestDTO;
-import com.codzilla.backend.Authentication.dto.LoginResponseDTO;
-import com.codzilla.backend.Authentication.dto.RegisterRequestDTO;
-import com.codzilla.backend.Authentication.dto.RegisterResponseDTO;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -64,7 +61,7 @@ public class AuthController {
         refreshCookie.setMaxAge((int) settings.getRefreshTokenTtl().toSeconds());
         refreshCookie.setSecure(false);
         response.addCookie(refreshCookie);
-        return ResponseEntity.ok(new LoginResponseDTO(user.getNickname()));
+        return ResponseEntity.ok(new UserResponseDTO(user));
     }
 
     @PostMapping("/logout")
