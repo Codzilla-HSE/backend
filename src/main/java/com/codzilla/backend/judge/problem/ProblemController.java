@@ -1,7 +1,7 @@
 package com.codzilla.backend.judge.problem;
 
-import com.codzilla.backend.PreMatch.MatchRoom.Match;
-import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
+import com.codzilla.backend.MatchRoom.Match;
+import com.codzilla.backend.MatchRoom.MatchService;
 import com.codzilla.backend.PreMatch.model.Category;
 import com.codzilla.backend.PreMatch.model.Language;
 import com.codzilla.backend.User.User;

@@ -1,5 +1,8 @@
 package com.codzilla.backend.PreMatch.MatchRoom;
 
+import com.codzilla.backend.MatchRoom.Match;
+import com.codzilla.backend.MatchRoom.MatchRepository;
+import com.codzilla.backend.MatchRoom.MatchService;
 import com.codzilla.backend.Rating.MatchFinishedEvent;
 import com.codzilla.backend.judge.client.SqlServiceClient;
 import org.junit.jupiter.api.Test;
@@ -37,7 +40,7 @@ class MatchFinishTest {
 
     private Match liveMatch(UUID id, UUID first, UUID second) {
         Match m = new Match(first, second);
-        m.id = id;
+        m.setId(id);
         m.setStatus(Match.Status.LIVE);
         return m;
     }

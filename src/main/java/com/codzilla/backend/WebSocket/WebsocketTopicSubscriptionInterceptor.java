@@ -1,10 +1,6 @@
 package com.codzilla.backend.WebSocket;
 
-import com.codzilla.backend.PreMatch.MatchRoom.Match;
-import com.codzilla.backend.PreMatch.MatchRoom.MatchRepository;
-import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
-import com.codzilla.backend.PreMatch.MatchSettings;
-import com.codzilla.backend.User.User;
+import com.codzilla.backend.MatchRoom.MatchRepository;
 import com.codzilla.backend.User.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;

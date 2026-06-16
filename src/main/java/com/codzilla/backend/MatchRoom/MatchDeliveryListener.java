@@ -1,12 +1,14 @@
-package com.codzilla.backend.PreMatch;
+package com.codzilla.backend.MatchRoom;
 
 import com.codzilla.backend.PreMatch.DTO.DraftSessionResponseDTO;
 import com.codzilla.backend.PreMatch.DTO.MatchResultDTO;
 import com.codzilla.backend.PreMatch.DTO.WebSocketDTO;
+import com.codzilla.backend.PreMatch.MatchSettings;
 import com.codzilla.backend.PreMatch.events.MatchResultNotifyEvent;
-import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
 import com.codzilla.backend.PreMatch.events.DraftSessionFinishedEvent;
 import com.codzilla.backend.PreMatch.events.DraftSessionUpdatedEvent;
+import com.codzilla.backend.judge.submission.SubmissionResponseDTO;
+import com.codzilla.backend.judge.submission.SubmissionUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -71,6 +73,28 @@ public class MatchDeliveryListener {
                 new WebSocketDTO(
                         WebSocketDTO.Status.MATCH_FINISHED,
                         new MatchResultDTO("LOSE", event.loserNewRating(), event.loserRatingDelta())
+                )
+        );
+    }
+
+    @Async
+    @EventListener
+    public void handleSubmissionUpdated(SubmissionUpdatedEvent submissionUpdatedEvent) {
+        var submission = submissionUpdatedEvent.submission();
+        messagingTemplate.convertAndSend(
+                matchSettings.getWebSocketMatchDestination(submission.getMatchId()),
+                new WebSocketDTO(
+                        WebSocketDTO.Status.SUBMISSION,
+                        new SubmissionResponseDTO(
+                                submission.getId(),
+                                submission.getProblemId(),
+                                submission.getLanguageId(),
+                                submission.getStatus().name(),
+                                submission.getCreatedAt(),
+                                submission.getUpdatedAt(),
+                                submission.getResultDetails(),
+                                submission.getUserId()
+                        )
                 )
         );
     }

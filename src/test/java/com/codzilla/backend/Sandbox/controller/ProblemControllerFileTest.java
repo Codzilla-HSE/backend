@@ -1,7 +1,7 @@
 package com.codzilla.backend.Sandbox.controller;
 
-import com.codzilla.backend.PreMatch.MatchRoom.Match;
-import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
+import com.codzilla.backend.MatchRoom.Match;
+import com.codzilla.backend.MatchRoom.MatchService;
 import com.codzilla.backend.PreMatch.model.Category;
 import com.codzilla.backend.S3.S3Repository;
 import com.codzilla.backend.User.User;

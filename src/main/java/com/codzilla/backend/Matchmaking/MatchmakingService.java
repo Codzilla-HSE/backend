@@ -2,7 +2,7 @@ package com.codzilla.backend.Matchmaking;
 
 import com.codzilla.backend.Authentication.Exceptions.UserNotFoundException;
 import com.codzilla.backend.User.UserRepository;
-import com.codzilla.backend.PreMatch.MatchRoom.MatchService;
+import com.codzilla.backend.MatchRoom.MatchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
