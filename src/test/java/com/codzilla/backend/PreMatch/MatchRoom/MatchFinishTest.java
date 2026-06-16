@@ -40,7 +40,7 @@ class MatchFinishTest {
 
     private Match liveMatch(UUID id, UUID first, UUID second) {
         Match m = new Match(first, second);
-        m.id = id;
+        m.setId(id);
         m.setStatus(Match.Status.LIVE);
         return m;
     }

@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 @Setter
 public class Match {
 
-    enum Status {
+    public enum Status {
         DRAFTING,
         LIVE,
         FINISHED
@@ -77,7 +77,7 @@ public class Match {
         return null;
     }
 
-    Match(UUID firstUserId, UUID secondUserId) {
+    public Match(UUID firstUserId, UUID secondUserId) {
         this.firstUserId = firstUserId;
         this.secondUserId = secondUserId;
     }
