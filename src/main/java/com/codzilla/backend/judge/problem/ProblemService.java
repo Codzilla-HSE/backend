@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.*;
 
@@ -204,5 +203,9 @@ public class ProblemService {
             }
         }
         throw new RuntimeException("No SQL tasks found at any level (EASY, MEDIUM, HARD)");
+    }
+
+    public ProblemResponseDTO getArtefactsOfProblem(Long problemId) {
+        return artefactik0Client.getProblem(problemId);
     }
 }

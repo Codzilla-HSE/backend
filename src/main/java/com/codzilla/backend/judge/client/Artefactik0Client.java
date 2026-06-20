@@ -1,5 +1,7 @@
 package com.codzilla.backend.judge.client;
 
+import com.codzilla.backend.judge.problem.ProblemResponseDTO;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
@@ -43,6 +45,23 @@ public class Artefactik0Client {
             return response.getId();
         } catch (Exception e) {
             throw new RuntimeException("Failed to create problem in Artefactik0", e);
+        }
+    }
+
+    public ProblemResponseDTO getProblem(Long problemId) {
+        try {
+            String raw = restClient.post()
+                                   .uri("/api/problems/{}", problemId)
+                                   .contentType(MediaType.APPLICATION_JSON)
+                                   .retrieve()
+                                   .body(String.class);
+
+            ProblemResponseDTO
+                    response = objectMapper.readValue(raw, ProblemResponseDTO.class);
+            log.info("Artefactik0 get problem id={}", response.getId());
+            return response;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get problem from Artefactik0", e);
         }
     }
 
