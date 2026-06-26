@@ -65,12 +65,11 @@ public class Artefactik0Client {
 
     public ProblemResponseDTO getProblem(Long problemId) {
         try {
-            String raw = restClient.post()
+            String raw = restClient.get()
                                    .uri(
                                            "/api/problems/{}",
                                            problemId
                                    )
-                                   .contentType(MediaType.APPLICATION_JSON)
                                    .retrieve()
                                    .body(String.class);
 
@@ -94,25 +93,19 @@ public class Artefactik0Client {
 
     public String getStatement(Long problemId) {
         try {
-            String raw = restClient.post()
+            String raw = restClient.get()
                                    .uri(
                                            "/api/problems/{}/statement",
                                            problemId
                                    )
-                                   .contentType(MediaType.APPLICATION_JSON)
                                    .retrieve()
                                    .body(String.class);
 
-            String
-                    response = objectMapper.readValue(
-                    raw,
-                    String.class
-            );
             log.info(
                     "Artefactik0 get statement {}",
-                    response
+                    raw
             );
-            return response;
+            return raw;
         } catch (Exception e) {
             throw new RuntimeException(
                     "Failed to get statement from Artefactik0",
