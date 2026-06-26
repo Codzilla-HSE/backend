@@ -1,6 +1,7 @@
 package com.codzilla.backend.MatchRoom;
 
 
+import com.codzilla.backend.PreMatch.model.Category;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.judge.problem.ProblemService;
 import org.springframework.http.HttpStatusCode;
@@ -25,23 +26,24 @@ public class MatchController {
         this.problemService = problemService;
     }
 
-    @GetMapping("/{matchId}/problem")
-    ResponseEntity<?> getMatchProblem(
-            @AuthenticationPrincipal User user,
-            @PathVariable UUID matchId) {
+    @GetMapping("/{matchId}/options")
+    ResponseEntity<?> getMatchOptions(@AuthenticationPrincipal User user, UUID matchId) {
         var match = matchService.getMatchById(matchId);
-
         if (match == null) {
             return ResponseEntity.notFound().build();
         }
-        if (!(match.getFirstUserId().equals(user.getId()) || match.getSecondUserId().equals(user.getId()))) {
+        if (!(match.getFirstUserId().equals(user.getId()) ||
+                match.getSecondUserId().equals(user.getId()))) {
             return ResponseEntity.status(HttpStatusCode.valueOf(404)).build();
         }
         try {
-            var artefacts = problemService.getArtefactsOfProblem(match.getProblem().getId());
-            return ResponseEntity.ok(artefacts);
+            var statement = problemService.getStatementOfProblem(match.getProblem().getId());
+            var options = match.getOptions();
+            var response = new MatchOptions(statement, options.get(Category.Language), options.get(Category.ProblemType), options.get(Category.ProblemLevel));
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+
     }
 }

@@ -24,85 +24,164 @@ public class Artefactik0Client {
 
     public Artefactik0Client(@Value("${artefactik0.base-url}") String baseUrl) {
         this.restClient = RestClient.builder()
-                .baseUrl(baseUrl)
-                .defaultHeader("Accept", "application/json")
-                .defaultHeader("Content-Type", "application/json")
-                .build();
+                                    .baseUrl(baseUrl)
+                                    .defaultHeader(
+                                            "Accept",
+                                            "application/json"
+                                    )
+                                    .defaultHeader(
+                                            "Content-Type",
+                                            "application/json"
+                                    )
+                                    .build();
     }
 
     public Long createProblem(CreateProblemRequest request) {
         try {
             String body = objectMapper.writeValueAsString(request);
             String raw = restClient.post()
-                    .uri("/api/problems")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(body)
-                    .retrieve()
-                    .body(String.class);
+                                   .uri("/api/problems")
+                                   .contentType(MediaType.APPLICATION_JSON)
+                                   .body(body)
+                                   .retrieve()
+                                   .body(String.class);
 
-            ProblemResponse response = objectMapper.readValue(raw, ProblemResponse.class);
-            log.info("Artefactik0 created problem id={}", response.getId());
+            ProblemResponse response = objectMapper.readValue(
+                    raw,
+                    ProblemResponse.class
+            );
+            log.info(
+                    "Artefactik0 created problem id={}",
+                    response.getId()
+            );
             return response.getId();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create problem in Artefactik0", e);
+            throw new RuntimeException(
+                    "Failed to create problem in Artefactik0",
+                    e
+            );
         }
     }
 
     public ProblemResponseDTO getProblem(Long problemId) {
         try {
             String raw = restClient.post()
-                                   .uri("/api/problems/{}", problemId)
+                                   .uri(
+                                           "/api/problems/{}",
+                                           problemId
+                                   )
                                    .contentType(MediaType.APPLICATION_JSON)
                                    .retrieve()
                                    .body(String.class);
 
             ProblemResponseDTO
-                    response = objectMapper.readValue(raw, ProblemResponseDTO.class);
-            log.info("Artefactik0 get problem id={}", response.getId());
+                    response = objectMapper.readValue(
+                    raw,
+                    ProblemResponseDTO.class
+            );
+            log.info(
+                    "Artefactik0 get problem id={}",
+                    response.getId()
+            );
             return response;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to get problem from Artefactik0", e);
+            throw new RuntimeException(
+                    "Failed to get problem from Artefactik0",
+                    e
+            );
         }
     }
+
+    public String getStatement(Long problemId) {
+        try {
+            String raw = restClient.post()
+                                   .uri(
+                                           "/api/problems/{}/statement",
+                                           problemId
+                                   )
+                                   .contentType(MediaType.APPLICATION_JSON)
+                                   .retrieve()
+                                   .body(String.class);
+
+            String
+                    response = objectMapper.readValue(
+                    raw,
+                    String.class
+            );
+            log.info(
+                    "Artefactik0 get statement {}",
+                    response
+            );
+            return response;
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Failed to get statement from Artefactik0",
+                    e
+            );
+        }
+    }
+
 
     public List<TestCase> getTests(Long problemId) {
         try {
 
             List<TestCase> tests = restClient.get()
-                    .uri("/api/problems/" + problemId + "/tests")
-                    .retrieve()
-                    .body(new ParameterizedTypeReference<List<TestCase>>() {});
+                                             .uri("/api/problems/" + problemId + "/tests")
+                                             .retrieve()
+                                             .body(new ParameterizedTypeReference<List<TestCase>>() {
+                                             });
             if (tests == null) {
-                throw new RuntimeException("No tests returned from Artefactik0 for problem " + problemId);
+                throw new RuntimeException(
+                        "No tests returned from Artefactik0 for problem " + problemId);
             }
-            log.info("Artefactik0 returned {} tests for problem {}", tests.size(), problemId);
+            log.info(
+                    "Artefactik0 returned {} tests for problem {}",
+                    tests.size(),
+                    problemId
+            );
             return tests;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch tests from Artefactik0 for problem " + problemId, e);
+            throw new RuntimeException(
+                    "Failed to fetch tests from Artefactik0 for problem " + problemId,
+                    e
+            );
         }
     }
 
 
     /**
      * Получить случайную задачу из Artefactik0 по типу и сложности.
-     * @param type   ALGORITHM, DATA_STRUCTURES, MATH (пока заглушка -> ALGORITHM)
-     * @param level  EASY, MEDIUM, HARD
+     *
+     * @param type  ALGORITHM, DATA_STRUCTURES, MATH (пока заглушка -> ALGORITHM)
+     * @param level EASY, MEDIUM, HARD
      */
     public RandomProblemResponse getRandomProblem(String type, String level) {
         try {
 
             String uri = UriComponentsBuilder.fromPath("/api/problems/random")
-                    .queryParam("type", type.toUpperCase())
-                    .queryParam("complexity", level.toUpperCase())
-                    .build().toString();
+                                             .queryParam(
+                                                     "type",
+                                                     type.toUpperCase()
+                                             )
+                                             .queryParam(
+                                                     "complexity",
+                                                     level.toUpperCase()
+                                             )
+                                             .build().toString();
 
             String raw = restClient.get()
-                    .uri(uri)
-                    .retrieve()
-                    .body(String.class);
-            return objectMapper.readValue(raw, RandomProblemResponse.class);
+                                   .uri(uri)
+                                   .retrieve()
+                                   .body(String.class);
+            return objectMapper.readValue(
+                    raw,
+                    RandomProblemResponse.class
+            );
         } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch random problem from Artefactik0", e);
+            throw new RuntimeException(
+                    "Failed to fetch random problem from Artefactik0",
+                    e
+            );
         }
     }
 

@@ -208,4 +208,8 @@ public class ProblemService {
     public ProblemResponseDTO getArtefactsOfProblem(Long problemId) {
         return artefactik0Client.getProblem(problemId);
     }
+
+    public String getStatementOfProblem(Long problemId) {
+        return artefactik0Client.getStatement(problemId);
+    }
 }
