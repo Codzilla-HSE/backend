@@ -67,8 +67,7 @@ public class Artefactik0Client {
         try {
             String raw = restClient.get()
                                    .uri(
-                                           "/api/problems/{}",
-                                           problemId
+                                           "/api/problems/" + problemId
                                    )
                                    .retrieve()
                                    .body(String.class);
@@ -95,8 +94,7 @@ public class Artefactik0Client {
         try {
             String raw = restClient.get()
                                    .uri(
-                                           "/api/problems/{}/statement",
-                                           problemId
+                                           "/api/problems/" + problemId + "/statement"
                                    )
                                    .retrieve()
                                    .body(String.class);
