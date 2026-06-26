@@ -27,7 +27,7 @@ public class MatchController {
     }
 
     @GetMapping("/{matchId}/options")
-    ResponseEntity<?> getMatchOptions(@AuthenticationPrincipal User user, UUID matchId) {
+    ResponseEntity<?> getMatchOptions(@AuthenticationPrincipal User user, @PathVariable UUID matchId) {
         var match = matchService.getMatchById(matchId);
         if (match == null) {
             return ResponseEntity.notFound().build();
