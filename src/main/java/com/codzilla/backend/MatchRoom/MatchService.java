@@ -95,7 +95,7 @@ public class MatchService {
         log.info("Pick problem of options: language={}, type={}, level={}",
                 language, problemType, problemLevel);
 
-        if (language != null) {
+        if (language == null) {
             log.info("Choosing SQL problem");
             Problem sqlProblem = problemService.getOrCreateRandomSqlProblem(problemLevel);
             log.info("Selected SQL problem: id={}, type={}", sqlProblem.getId(), sqlProblem.getType());
