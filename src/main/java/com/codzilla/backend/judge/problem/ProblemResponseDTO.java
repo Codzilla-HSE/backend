@@ -7,8 +7,6 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Data
-@Getter
-@Setter
 public class ProblemResponseDTO {
 
     Long id;
@@ -17,7 +15,6 @@ public class ProblemResponseDTO {
     Integer memoryLimit;
     boolean hasStatement;
     int testCount;
-    LocalDateTime createdAt;
     String complexity;
     String taskType;
 }
