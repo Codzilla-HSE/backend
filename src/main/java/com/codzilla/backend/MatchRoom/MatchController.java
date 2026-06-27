@@ -38,8 +38,9 @@ public class MatchController {
         }
         try {
             var statement = problemService.getStatementOfProblem(match.getProblem().getId());
+            var problem = problemService.getArtefactsOfProblem(match.getProblem().getId());
             var options = match.getOptions();
-            var response = new MatchOptions(statement, options.get(Category.Language), options.get(Category.ProblemType), options.get(Category.ProblemLevel));
+            var response = new MatchOptions(problem.getName(), statement, options.get(Category.Language), options.get(Category.ProblemType), options.get(Category.ProblemLevel));
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
