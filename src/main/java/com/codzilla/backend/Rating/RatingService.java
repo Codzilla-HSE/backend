@@ -1,5 +1,7 @@
 package com.codzilla.backend.Rating;
 
+import com.codzilla.backend.MatchRoom.Match;
+import com.codzilla.backend.MatchRoom.MatchRepository;
 import com.codzilla.backend.PreMatch.events.MatchResultNotifyEvent;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserRepository;
@@ -20,6 +22,7 @@ import java.util.UUID;
 public class RatingService {
 
     private final UserRepository userRepository;
+    private final MatchRepository matchRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final Glicko2 glicko2 = new Glicko2();
 
@@ -59,6 +62,8 @@ public class RatingService {
         userRepository.save(winner);
         userRepository.save(loser);
 
+        saveRatingSnapshot(matchId, winnerId, winner.getRating(), loser.getRating());
+
         log.info("Rating updated: winner {} -> {}, loser {} -> {}",
                 winnerId, winner.getRating(), loserId, loser.getRating());
 
@@ -73,6 +78,22 @@ public class RatingService {
                 loser.getRating(),
                 Math.abs(loser.getRating() - loserOldRating)
         ));
+    }
+
+    private void saveRatingSnapshot(UUID matchId, UUID winnerId, int winnerRating, int loserRating) {
+        Match match = matchRepository.findById(matchId).orElse(null);
+        if (match == null) {
+            log.warn("saveRatingSnapshot: match {} not found", matchId);
+            return;
+        }
+        if (winnerId.equals(match.getFirstUserId())) {
+            match.setFirstUserRating(winnerRating);
+            match.setSecondUserRating(loserRating);
+        } else {
+            match.setFirstUserRating(loserRating);
+            match.setSecondUserRating(winnerRating);
+        }
+        matchRepository.save(match);
     }
 
     private void applyResult(User user, Glicko2.Result r, Instant now) {

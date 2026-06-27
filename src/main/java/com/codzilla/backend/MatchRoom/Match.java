@@ -48,6 +48,10 @@ public class Match {
 
     boolean ratingApplied = false;
 
+    Integer firstUserRating;
+
+    Integer secondUserRating;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "options", columnDefinition = "jsonb")
     Map<Category, String> options;
