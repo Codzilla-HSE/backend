@@ -83,7 +83,7 @@ public class UserController {
         return createPresignedGetUrl(
                 s3Settings.bucketName(),
                 "icons/" + user.getEmail()
-        );
+        ).replaceAll("minio", "localhost");
     }
 
     @PostMapping("/upload-icon")
