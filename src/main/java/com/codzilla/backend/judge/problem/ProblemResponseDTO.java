@@ -1,19 +1,23 @@
 package com.codzilla.backend.judge.problem;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Data
+@Getter
+@Setter
 public class ProblemResponseDTO {
 
-    private Long id;
-    private String name;
-    private Integer timeLimit;
-    private Integer memoryLimit;
-    private boolean hasStatement;
-    private int testCount;
-    private LocalDateTime createdAt;
-    private String complexity;
-    private String taskType;
+    Long id;
+    String name;
+    Integer timeLimit;
+    Integer memoryLimit;
+    boolean hasStatement;
+    int testCount;
+    LocalDateTime createdAt;
+    String complexity;
+    String taskType;
 }
