@@ -113,6 +113,7 @@ public class UserController {
         GetObjectRequest objectRequest = GetObjectRequest.builder()
                                                          .bucket(bucketName)
                                                          .key(keyName)
+                                                         .overrideConfiguration(cfg -> cfg.putHeader("Host", "localhost:9000"))
                                                          .build();
 
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
