@@ -1,5 +1,6 @@
 package com.codzilla.backend.Rating;
 
+import com.codzilla.backend.MatchRoom.MatchRepository;
 import com.codzilla.backend.PreMatch.events.MatchResultNotifyEvent;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.User.UserRepository;
@@ -23,6 +24,9 @@ class RatingServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private MatchRepository matchRepository;
+
+    @Mock
     private ApplicationEventPublisher eventPublisher;
 
     private User newUser(UUID id, int rating) {
@@ -38,7 +42,7 @@ class RatingServiceTest {
 
     @Test
     void matchFinishedEvent_winnerGains_loserLoses() {
-        RatingService service = new RatingService(userRepository, eventPublisher);
+        RatingService service = new RatingService(userRepository, matchRepository, eventPublisher);
 
         UUID winnerId = UUID.randomUUID();
         UUID loserId = UUID.randomUUID();
@@ -67,7 +71,7 @@ class RatingServiceTest {
 
     @Test
     void matchFinishedEvent_publishesNotifyEventWithEmailsAndDeltas() {
-        RatingService service = new RatingService(userRepository, eventPublisher);
+        RatingService service = new RatingService(userRepository, matchRepository, eventPublisher);
 
         UUID winnerId = UUID.randomUUID();
         UUID loserId = UUID.randomUUID();
@@ -96,7 +100,7 @@ class RatingServiceTest {
 
     @Test
     void unknownUser_skipsWithoutSaving() {
-        RatingService service = new RatingService(userRepository, eventPublisher);
+        RatingService service = new RatingService(userRepository, matchRepository, eventPublisher);
         UUID winnerId = UUID.randomUUID();
         UUID loserId = UUID.randomUUID();
 
