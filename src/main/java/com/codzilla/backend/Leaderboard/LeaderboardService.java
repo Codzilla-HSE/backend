@@ -37,22 +37,39 @@ public class LeaderboardService {
         int total = (int) userRepository.count();
 
         List<User> topUsers =
-                userRepository.findAllByOrderByRatingDescIdAsc(PageRequest.of(0, EDGE_SIZE));
+                userRepository.findAllByOrderByRatingDescIdAsc(PageRequest.of(
+                        0,
+                        EDGE_SIZE
+                ));
 
         List<User> bottomUsers;
         if (total <= EDGE_SIZE) {
             bottomUsers = List.of();
         } else {
-            int bottomCount = Math.min(EDGE_SIZE, total - EDGE_SIZE);
+            int bottomCount = Math.min(
+                    EDGE_SIZE,
+                    total - EDGE_SIZE
+            );
             List<User> bottomAsc =
-                    userRepository.findAllByOrderByRatingAscIdDesc(PageRequest.of(0, bottomCount));
+                    userRepository.findAllByOrderByRatingAscIdDesc(PageRequest.of(
+                            0,
+                            bottomCount
+                    ));
             bottomUsers = new ArrayList<>(bottomAsc);
             Collections.reverse(bottomUsers);
         }
 
-        List<LeaderboardEntryDTO> top = mapWithRank(topUsers, 1, currentEmail);
+        List<LeaderboardEntryDTO> top = mapWithRank(
+                topUsers,
+                1,
+                currentEmail
+        );
         int bottomStartRank = total - bottomUsers.size() + 1;
-        List<LeaderboardEntryDTO> bottom = mapWithRank(bottomUsers, bottomStartRank, currentEmail);
+        List<LeaderboardEntryDTO> bottom = mapWithRank(
+                bottomUsers,
+                bottomStartRank,
+                currentEmail
+        );
 
         User me = userRepository.findByEmail(currentEmail).orElse(null);
         LeaderboardEntryDTO currentUser = null;
@@ -60,14 +77,24 @@ public class LeaderboardService {
             long above = userRepository.countByRatingGreaterThan(me.getRating());
             int myRank = (int) above + 1;
             currentUser = new LeaderboardEntryDTO(
-                    myRank, me.getNickname(), me.getRating(),
-                    avatarUrl(me.getEmail()), true);
+                    myRank,
+                    me.getNickname(),
+                    me.getRating(),
+                    avatarUrl(me.getEmail()),
+                    true
+            );
         }
 
-        return new LeaderboardResponseDTO(top, bottom, currentUser, total);
+        return new LeaderboardResponseDTO(
+                top,
+                bottom,
+                currentUser,
+                total
+        );
     }
 
-    private List<LeaderboardEntryDTO> mapWithRank(List<User> users, int startRank, String currentEmail) {
+    private List<LeaderboardEntryDTO> mapWithRank(List<User> users, int startRank,
+                                                  String currentEmail) {
         List<LeaderboardEntryDTO> result = new ArrayList<>(users.size());
         int rank = startRank;
         for (User u : users) {
@@ -84,13 +111,20 @@ public class LeaderboardService {
 
     private String avatarUrl(String email) {
         GetObjectRequest objectRequest = GetObjectRequest.builder()
-                .bucket(s3Settings.bucketName())
-                .key("icons/" + email)
-                .build();
+                                                         .bucket(s3Settings.bucketName())
+                                                         .key("icons/" + email)
+                                                         .overrideConfiguration(cfg -> cfg.putHeader(
+                                                                 "Host",
+                                                                 "localhost:9000"
+                                                         ))
+                                                         .build();
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(10))
-                .getObjectRequest(objectRequest)
-                .build();
-        return presigner.presignGetObject(presignRequest).url().toExternalForm();
+                                                                        .signatureDuration(Duration.ofMinutes(10))
+                                                                        .getObjectRequest(objectRequest)
+                                                                        .build();
+        return presigner.presignGetObject(presignRequest).url().toExternalForm().replaceFirst(
+                "minio",
+                "localhost"
+        );
     }
 }

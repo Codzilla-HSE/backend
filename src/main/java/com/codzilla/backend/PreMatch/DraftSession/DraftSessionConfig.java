@@ -22,19 +22,18 @@ public class DraftSessionConfig {
     public Map<String, Category> categorySequence() {
         return Map.of(
                 Language.PY.name(),
-                Category.ProblemType,
+                Category.ProblemLevel,
                 Language.CPP.name(),
-                Category.ProblemType,
+                Category.ProblemLevel,
                 Language.JAVA.name(),
-                Category.ProblemType,
-                Language.SQL.name(),
                 Category.ProblemLevel,
-
                 ProblemType.ALGORITHM.name(),
-                Category.ProblemLevel,
+                Category.Language,
                 ProblemType.MATH.name(),
-                Category.ProblemLevel,
+                Category.Language,
                 ProblemType.DATA_STRUCTURES.name(),
+                Category.Language,
+                ProblemType.SQL.name(),
                 Category.ProblemLevel
                 );
     }

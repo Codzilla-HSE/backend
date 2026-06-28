@@ -144,7 +144,7 @@ public class DraftSessionService {
                 matchId,
                 firstUserId,
                 secondUserId,
-                Category.Language
+                Category.ProblemType
         );
         draftSessionRepository.save(draftSession);
         startTimer(draftSession.getId());
