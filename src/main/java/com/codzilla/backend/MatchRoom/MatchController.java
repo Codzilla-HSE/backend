@@ -1,6 +1,6 @@
 package com.codzilla.backend.MatchRoom;
 
-
+import com.codzilla.backend.MatchRoom.dto.MatchHistoryEntryDTO;
 import com.codzilla.backend.PreMatch.model.Category;
 import com.codzilla.backend.User.User;
 import com.codzilla.backend.judge.problem.ProblemService;
@@ -11,8 +11,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
+import java.util.List;
 
 @Controller
 @RequestMapping("/match")
@@ -45,6 +47,12 @@ public class MatchController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
-
     }
+  
+   @GetMapping("/history")
+    public ResponseEntity<List<MatchHistoryEntryDTO>> getMatchHistory(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(matchService.getMatchHistory(user.getId()));
+    }
+
 }
+

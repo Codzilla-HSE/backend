@@ -1,5 +1,6 @@
 package com.codzilla.backend.MatchRoom;
 
+import com.codzilla.backend.MatchRoom.dto.MatchHistoryEntryDTO;
 import com.codzilla.backend.Rating.MatchFinishedEvent;
 import com.codzilla.backend.PreMatch.DraftSession.DraftSession;
 import com.codzilla.backend.PreMatch.DraftSession.DraftSessionService;
@@ -10,6 +11,8 @@ import com.codzilla.backend.judge.client.SqlServiceClient;
 import com.codzilla.backend.judge.problem.Problem;
 import com.codzilla.backend.judge.problem.ProblemRepository;
 import com.codzilla.backend.judge.problem.ProblemService;
+import com.codzilla.backend.User.User;
+import com.codzilla.backend.User.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -18,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -33,6 +37,7 @@ public class MatchService {
     private final ProblemRepository problemRepository;
     private final SqlServiceClient sqlServiceClient;
     private final ProblemService problemService;
+    private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public UUID startMatch(UUID firstUserId, UUID secondUserId) {
@@ -112,5 +117,28 @@ public class MatchService {
 
     public Match getMatchById(UUID matchId) {
         return matchRepository.getReferenceById(matchId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MatchHistoryEntryDTO> getMatchHistory(UUID userId) {
+        return matchRepository.findFinishedByUser(userId).stream()
+                .map(match -> {
+                    UUID opponentId = match.opponentOf(userId);
+                    String opponentNickname = userRepository.findById(opponentId)
+                            .map(User::getNickname)
+                            .orElse("Неизвестный соперник");
+                    boolean won = userId.equals(match.getWinnerId());
+                    Integer rating = userId.equals(match.getFirstUserId())
+                            ? match.getFirstUserRating()
+                            : match.getSecondUserRating();
+                    return new MatchHistoryEntryDTO(
+                            match.getId(),
+                            opponentNickname,
+                            won,
+                            rating,
+                            match.getFinishedAt()
+                    );
+                })
+                .toList();
     }
 }
