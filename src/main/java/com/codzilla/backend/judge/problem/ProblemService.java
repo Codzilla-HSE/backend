@@ -211,11 +211,15 @@ public class ProblemService {
         throw new RuntimeException("No SQL tasks found at any level (EASY, MEDIUM, HARD)");
     }
 
-    public ProblemResponseDTO getArtefactsOfProblem(Long problemId) {
+    public ProblemResponseDTO getArtefactsOfAlgoProblem(Long problemId) {
         return artefactik0Client.getProblem(problemId);
     }
 
-    public String getStatementOfProblem(Long problemId) {
+    public String getStatementOfAlgoProblem(Long problemId) {
         return artefactik0Client.getStatement(problemId);
+    }
+
+    public ProblemSqlResponseDTO getArtefactsOfSqlProblem(Long problemId) {
+        return sqlServiceClient.getArtefactsOfSqlProblem(problemId);
     }
 }
