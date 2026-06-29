@@ -65,11 +65,9 @@ public class ProblemController {
         }
 
         Long problemId = match.getProblem().getId();
-        String languageStr = match.getOptions().get(Category.Language);
-        int languageId = Enum.valueOf(Language.class, languageStr).getValue();
         UUID userId = user.getId();
 
-        String result = problemService.submitSolution(userId, matchId  , problemId, sourceCode, languageId);
+        String result = problemService.submitSolution(userId, match, problemId, sourceCode);
         return ResponseEntity.ok(result);
     }
 
