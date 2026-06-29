@@ -40,7 +40,7 @@ public class MatchController {
         }
         try {
             if (match.getOptions().get(Category.ProblemType).equals(ProblemType.SQL.name())) {
-                var artefacts = problemService.getArtefactsOfSqlProblem(match.getProblem().getId());
+                var artefacts = problemService.getArtefactsOfSqlProblem(match.getProblem().getExternalId());
                 var response = new MatchOptions(artefacts.getName(),
                                                 artefacts.getDescription(), "SQL",
                                                 "SQL",
