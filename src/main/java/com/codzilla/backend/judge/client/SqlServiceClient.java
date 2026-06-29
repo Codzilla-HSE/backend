@@ -1,5 +1,6 @@
 package com.codzilla.backend.judge.client;
 
+import com.codzilla.backend.judge.problem.ProblemSqlResponseDTO;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -108,6 +109,29 @@ public class SqlServiceClient {
             return response;
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch random SQL task for level " + level, e);
+        }
+    }
+
+    public ProblemSqlResponseDTO getArtefactsOfSqlProblem(Long problemId) {
+        try {
+            String raw = restClient.get()
+                                   .uri("/sqlservice/tasks/" + problemId)
+                                   .retrieve()
+                                   .body(String.class);
+
+            JsonNode root = objectMapper.readTree(raw);
+            if (!root.get("success").asBoolean()) {
+                String error = root.has("error") ? root.get("error").asText() : "Unknown error";
+                throw new RuntimeException("SqlService error: " + error);
+            }
+            JsonNode data = root.get("data");
+
+            ProblemSqlResponseDTO response = new ProblemSqlResponseDTO();
+            response.setName(data.get("title").asText());
+            response.setDescription(data.get("description").asText());
+            return response;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get artefacts of problem: {}" , e);
         }
     }
 
