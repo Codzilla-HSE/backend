@@ -1,5 +1,8 @@
 package com.codzilla.backend.judge.problem;
 
+import com.codzilla.backend.MatchRoom.Match;
+import com.codzilla.backend.PreMatch.model.Category;
+import com.codzilla.backend.PreMatch.model.Language;
 import com.codzilla.backend.PreMatch.model.ProblemType;
 import com.codzilla.backend.S3.S3Repository;
 import com.codzilla.backend.judge.client.Artefactik0Client;
@@ -61,18 +64,18 @@ public class ProblemService {
     }
 
 
-    public String submitSolution(UUID userId, UUID matchId ,  Long problemId, String sourceCode, int languageId) {
+    public String submitSolution(UUID userId, Match match , Long problemId, String sourceCode) {
         Problem problem = problemRepository.findById(problemId)
                 .orElseThrow(() -> new RuntimeException("Problem not found: " + problemId));
 
         return switch (problem.getType()) {
-            case ALGORITHM, MATH, DATA_STRUCTURES -> submitAlgo(userId, problem, sourceCode, languageId , matchId);
-            case SQL  -> submitSql(userId, problem, sourceCode , matchId);
+            case ALGORITHM, MATH, DATA_STRUCTURES -> submitAlgo(userId, problem, sourceCode, match);
+            case SQL  -> submitSql(userId, problem, sourceCode , match.getId());
         };
     }
 
 
-    private String submitAlgo(UUID userId, Problem problem, String sourceCode, int languageId , UUID matchId) {
+    private String submitAlgo(UUID userId, Problem problem, String sourceCode, Match match) {
         List<Artefactik0Client.TestCase> tests =
                 artefactik0Client.getTests(problem.getExternalId());
 
@@ -81,10 +84,13 @@ public class ProblemService {
                     "No tests in Artefactik0 for problem " + problem.getId());
         }
 
+        String languageStr = match.getOptions().get(Category.Language);
+        int languageId = Enum.valueOf(Language.class, languageStr).getValue();
+
         Submission sub = new Submission();
         sub.setProblemId(problem.getId());
         sub.setUserId(userId);
-        sub.setMatchId(matchId);
+        sub.setMatchId(match.getId());
         sub.setLanguageId(languageId);
         sub.setStatus(Submission.Status.IN_QUEUE);
         Submission saved = submissionRepository.save(sub);

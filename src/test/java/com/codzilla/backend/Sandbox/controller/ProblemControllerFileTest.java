@@ -99,7 +99,7 @@ class ProblemControllerFileTest {
         );
 
         when(matchService.getMatchById(matchId)).thenReturn(match);
-        when(problemService.submitSolution(any(UUID.class), any(UUID.class), anyLong(), anyString(), anyInt()))
+        when(problemService.submitSolution(any(UUID.class), any(Match.class), anyLong(), anyString()))
                 .thenReturn("Submitted!");
 
         mockMvc.perform(multipart("/problems/submit/file")

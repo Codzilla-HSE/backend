@@ -1,5 +1,7 @@
 package com.codzilla.backend.Sandbox;
 
+import com.codzilla.backend.MatchRoom.Match;
+import com.codzilla.backend.PreMatch.model.Category;
 import com.codzilla.backend.PreMatch.model.ProblemType;
 import com.codzilla.backend.judge.client.Artefactik0Client;
 import com.codzilla.backend.judge.judge0.Judge0Client;
@@ -11,11 +13,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.testcontainers.shaded.org.checkerframework.checker.units.qual.C;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -50,6 +50,7 @@ public class SandboxTest {
 
     private Problem problem;
     private Artefactik0Client.TestCase testCase;
+    private Match match;
 
     @BeforeEach
     void setUp() {
@@ -62,6 +63,9 @@ public class SandboxTest {
         testCase = new Artefactik0Client.TestCase();
         testCase.setInput("1 2");
         testCase.setOutput("3");
+
+        match = new Match(UUID.randomUUID(), UUID.randomUUID());
+        match.setOptions(Map.of(Category.Language, "PY"));
     }
 
     @Test
@@ -91,7 +95,7 @@ public class SandboxTest {
         when(problemRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
-                problemService.submitSolution(UUID.randomUUID(), null, 99L, "code", 71))
+                problemService.submitSolution(UUID.randomUUID(), null, 99L, "code"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Problem not found");
     }
@@ -124,7 +128,7 @@ public class SandboxTest {
         when(submissionRepository.save(any())).thenReturn(savedSub);
         when(submissionTestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        String result = problemService.submitSolution(UUID.randomUUID(), null, 1L, "print(3)", 71);
+        String result = problemService.submitSolution(UUID.randomUUID(), match, 1L, "print(3)");
 
         assertThat(result).isEqualTo("42");
     }
@@ -147,7 +151,9 @@ public class SandboxTest {
         when(submissionRepository.save(any())).thenReturn(savedSub);
         when(submissionTestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        problemService.submitSolution(UUID.randomUUID(), null, 1L, "print(3)", 71);
+
+
+        problemService.submitSolution(UUID.randomUUID(), match, 1L, "print(3)");
 
         verify(judge0Client, times(2)).submitAsync(anyString(), anyInt(), anyString(), isNull());
     }
@@ -170,7 +176,7 @@ public class SandboxTest {
         });
         when(submissionTestRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        problemService.submitSolution(UUID.randomUUID(), null, 1L, "print(3)", 71);
+        problemService.submitSolution(UUID.randomUUID(), match, 1L, "print(3)");
 
         assertThat(saved[0]).isNotNull();
         assertThat(saved[0].getStatus()).isEqualTo(Submission.Status.IN_QUEUE);
@@ -190,7 +196,7 @@ public class SandboxTest {
         when(submissionRepository.save(any())).thenReturn(savedSub);
 
         assertThatThrownBy(() ->
-                problemService.submitSolution(UUID.randomUUID(), null, 1L, "print(3)", 71))
+                problemService.submitSolution(UUID.randomUUID(), match, 1L, "print(3)"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Judge0 unavailable");
     }
